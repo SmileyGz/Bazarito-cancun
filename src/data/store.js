@@ -1,10 +1,6 @@
-// ─────────────────────────────────────────────
-// Bazarito Cancún — Data Store (localStorage)
-// ─────────────────────────────────────────────
+import { supabase } from '../lib/supabase';
 
-const STORAGE_KEY  = 'bazarito_inventory';
-const SALES_KEY    = 'bazarito_sales';
-const ADMIN_PASSWORD = 'bazarito2024'; // Change this!
+export const ADMIN_PASSWORD = 'bazarito2024'; // Change this!
 
 export const CATEGORIES = [
   { id: 'all',      label: 'Todo',          emoji: '📦' },
@@ -27,165 +23,247 @@ export const DELIVERY_METHODS = {
   DELIVERY: 'delivery',
 };
 
-// ─── Seed inventory ───────────────────────────
-
-const SEED_DATA = [
-  { id:'1', name:'Organizador de Cocina Multiusos',    description:'Rack metálico de 3 niveles para organizar tu cocina.',  category:'hogar',    type:'stock',   cost:1250, price:2300, status:'available', stock:5,  supplier:'Mercado Central',   image:null, images:[], featured:true,  createdAt: new Date(Date.now() - 15*864e5).toISOString() },
-  { id:'2', name:'Repisa Bar de Madera',                description:'Repisa flotante estilo industrial para bar o sala.',     category:'hogar',    type:'one_off', cost:900,  price:1400, status:'available', stock:1,  supplier:'Liquidación local', image:null, images:[], featured:true,  createdAt: new Date(Date.now() - 10*864e5).toISOString() },
-  { id:'3', name:'Soporte Organizador de Baño',         description:'Torre organizadora de 4 niveles para baño.',            category:'hogar',    type:'stock',   cost:450,  price:850,  status:'available', stock:8,  supplier:'Mercado Central',   image:null, images:[], featured:false, createdAt: new Date(Date.now() - 8*864e5).toISOString()  },
-  { id:'4', name:'Cargador Magnético 3 en 1',           description:'Carga iPhone, AirPods y Apple Watch simultáneamente.',  category:'gadgets',  type:'stock',   cost:280,  price:550,  status:'available', stock:12, supplier:'Proveedor Tech',    image:null, images:[], featured:true,  createdAt: new Date(Date.now() - 6*864e5).toISOString()  },
-  { id:'5', name:'Bebedero Automático para Mascotas',   description:'Fuente de agua filtrada 1.8 L para perros y gatos.',    category:'mascotas', type:'stock',   cost:380,  price:699,  status:'available', stock:6,  supplier:'Proveedor Pet',     image:null, images:[], featured:false, createdAt: new Date(Date.now() - 5*864e5).toISOString()  },
-  { id:'6', name:'Lámpara LED de Escritorio',           description:'Lámpara articulada USB con luz regulable.',             category:'gadgets',  type:'stock',   cost:320,  price:620,  status:'available', stock:4,  supplier:'Proveedor Tech',    image:null, images:[], featured:false, createdAt: new Date(Date.now() - 4*864e5).toISOString()  },
-  { id:'7', name:'Smart TV 43" Samsung',                description:'Televisión 4K como nueva, con control remoto.',         category:'gadgets',  type:'one_off', cost:4500, price:7800, status:'available', stock:1,  supplier:'Marketplace',       image:null, images:[], featured:true,  createdAt: new Date(Date.now() - 3*864e5).toISOString()  },
-  { id:'8', name:'Dispensador de Jabón con Sensor',     description:'Sin contacto, recargable USB. Ideal cocina y baño.',    category:'bienestar',type:'stock',   cost:210,  price:399,  status:'available', stock:10, supplier:'Mercado Central',   image:null, images:[], featured:false, createdAt: new Date(Date.now() - 2*864e5).toISOString()  },
-];
-
-// ─── Seed sales (demo data for the last 60 days) ──
-
-function pastDate(daysAgo) {
-  return new Date(Date.now() - daysAgo * 864e5).toISOString();
+let BAZARITO_ID = null;
+async function getBusinessId() {
+  if (BAZARITO_ID) return BAZARITO_ID;
+  const { data } = await supabase.from('businesses').select('id').eq('slug', 'bazarito').single();
+  if (data) BAZARITO_ID = data.id;
+  return BAZARITO_ID;
 }
 
-const SEED_SALES = [
-  // June (current month)
-  { id:'s1',  productId:'1', productName:'Organizador de Cocina Multiusos', category:'hogar',      type:'stock',   cost:1250, salePrice:2300, quantity:2, profit:2100, margin:84, saleDate: pastDate(2),  delivery: DELIVERY_METHODS.DELIVERY, notes:'' },
-  { id:'s2',  productId:'4', productName:'Cargador Magnético 3 en 1',       category:'gadgets',    type:'stock',   cost:280,  salePrice:550,  quantity:3, profit:810,  margin:96, saleDate: pastDate(3),  delivery: DELIVERY_METHODS.PICKUP,   notes:'' },
-  { id:'s3',  productId:'8', productName:'Dispensador de Jabón con Sensor', category:'bienestar',  type:'stock',   cost:210,  salePrice:399,  quantity:2, profit:378,  margin:90, saleDate: pastDate(5),  delivery: DELIVERY_METHODS.DELIVERY, notes:'' },
-  { id:'s4',  productId:'3', productName:'Soporte Organizador de Baño',     category:'hogar',      type:'stock',   cost:450,  salePrice:850,  quantity:1, profit:400,  margin:89, saleDate: pastDate(6),  delivery: DELIVERY_METHODS.PICKUP,   notes:'' },
-  // May
-  { id:'s5',  productId:'1', productName:'Organizador de Cocina Multiusos', category:'hogar',      type:'stock',   cost:1250, salePrice:2300, quantity:1, profit:1050, margin:84, saleDate: pastDate(12), delivery: DELIVERY_METHODS.DELIVERY, notes:'' },
-  { id:'s6',  productId:'2', productName:'Repisa Bar de Madera',            category:'hogar',      type:'one_off', cost:900,  salePrice:1450, quantity:1, profit:550,  margin:61, saleDate: pastDate(15), delivery: DELIVERY_METHODS.PICKUP,   notes:'Cliente negocio' },
-  { id:'s7',  productId:'4', productName:'Cargador Magnético 3 en 1',       category:'gadgets',    type:'stock',   cost:280,  salePrice:550,  quantity:4, profit:1080, margin:96, saleDate: pastDate(18), delivery: DELIVERY_METHODS.DELIVERY, notes:'' },
-  { id:'s8',  productId:'5', productName:'Bebedero Automático para Mascotas',category:'mascotas',  type:'stock',   cost:380,  salePrice:699,  quantity:2, profit:638,  margin:84, saleDate: pastDate(20), delivery: DELIVERY_METHODS.PICKUP,   notes:'' },
-  { id:'s9',  productId:'6', productName:'Lámpara LED de Escritorio',       category:'gadgets',    type:'stock',   cost:320,  salePrice:620,  quantity:1, profit:300,  margin:94, saleDate: pastDate(22), delivery: DELIVERY_METHODS.DELIVERY, notes:'' },
-  { id:'s10', productId:'8', productName:'Dispensador de Jabón con Sensor', category:'bienestar',  type:'stock',   cost:210,  salePrice:399,  quantity:3, profit:567,  margin:90, saleDate: pastDate(25), delivery: DELIVERY_METHODS.PICKUP,   notes:'' },
-  // April
-  { id:'s11', productId:'1', productName:'Organizador de Cocina Multiusos', category:'hogar',      type:'stock',   cost:1250, salePrice:2300, quantity:3, profit:3150, margin:84, saleDate: pastDate(38), delivery: DELIVERY_METHODS.DELIVERY, notes:'' },
-  { id:'s12', productId:'7', productName:'Smart TV 43" Samsung',            category:'electronica',type:'one_off', cost:4500, salePrice:7800, quantity:1, profit:3300, margin:73, saleDate: pastDate(42), delivery: DELIVERY_METHODS.PICKUP,   notes:'Precio negociado' },
-  { id:'s13', productId:'3', productName:'Soporte Organizador de Baño',     category:'hogar',      type:'stock',   cost:450,  salePrice:850,  quantity:2, profit:800,  margin:89, saleDate: pastDate(45), delivery: DELIVERY_METHODS.DELIVERY, notes:'' },
-  { id:'s14', productId:'4', productName:'Cargador Magnético 3 en 1',       category:'gadgets',    type:'stock',   cost:280,  salePrice:550,  quantity:5, profit:1350, margin:96, saleDate: pastDate(50), delivery: DELIVERY_METHODS.PICKUP,   notes:'' },
-  { id:'s15', productId:'5', productName:'Bebedero Automático para Mascotas',category:'mascotas',  type:'stock',   cost:380,  salePrice:699,  quantity:1, profit:319,  margin:84, saleDate: pastDate(55), delivery: DELIVERY_METHODS.DELIVERY, notes:'' },
-];
+async function getCategoryId(slug) {
+  const bizId = await getBusinessId();
+  let { data } = await supabase.from('categories').select('id').eq('business_id', bizId).eq('slug', slug).single();
+  if (!data) {
+    const { data: newCat } = await supabase.from('categories').insert([{ business_id: bizId, name: slug, slug }]).select().single();
+    return newCat?.id;
+  }
+  return data?.id;
+}
+
+async function getSupplierId(name) {
+  if (!name) return null;
+  const bizId = await getBusinessId();
+  let { data } = await supabase.from('suppliers').select('id').eq('business_id', bizId).eq('name', name).single();
+  if (!data) {
+    const { data: newSup } = await supabase.from('suppliers').insert([{ business_id: bizId, name }]).select().single();
+    return newSup?.id;
+  }
+  return data?.id;
+}
 
 // ─── Products CRUD ────────────────────────────
 
-export function getProducts() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) { localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DATA)); return SEED_DATA; }
-    return JSON.parse(raw);
-  } catch { return SEED_DATA; }
+export async function getProducts() {
+  const bizId = await getBusinessId();
+  if (!bizId) return [];
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, inventory(quantity), categories(slug), suppliers(name)')
+    .eq('business_id', bizId)
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return data.map(p => ({
+    id: p.id,
+    sku: p.sku || '',
+    name: p.name,
+    description: p.description,
+    category: p.categories?.slug || 'hogar',
+    type: p.type,
+    cost: p.cost,
+    price: p.price,
+    status: p.status,
+    stock: p.inventory?.quantity || 0,
+    supplier: p.suppliers?.name || '',
+    images: p.images || [],
+    createdAt: p.created_at
+  }));
 }
 
-export function saveProducts(products) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+export async function addProduct(product) {
+  const bizId = await getBusinessId();
+  const categoryId = await getCategoryId(product.category);
+  const supplierId = await getSupplierId(product.supplier || 'General');
+
+  const { data: prod, error } = await supabase
+    .from('products')
+    .insert([{
+      business_id: bizId,
+      category_id: categoryId,
+      supplier_id: supplierId,
+      name: product.name,
+      description: product.description || '',
+      type: product.type,
+      status: product.status,
+      price: product.price,
+      cost: product.cost,
+      images: product.images || []
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  if (product.type === PRODUCT_TYPES.STOCK) {
+    await supabase.from('inventory').insert([{
+      product_id: prod.id,
+      quantity: product.stock || 0
+    }]);
+  }
+
+  return prod;
 }
 
-export function addProduct(product) {
-  const products = getProducts();
-  const newProduct = { ...product, id: Date.now().toString(), createdAt: new Date().toISOString() };
-  products.unshift(newProduct);
-  saveProducts(products);
-  return newProduct;
+export async function updateProduct(id, updates) {
+  const payload = {};
+  if (updates.name !== undefined) payload.name = updates.name;
+  if (updates.description !== undefined) payload.description = updates.description;
+  if (updates.type !== undefined) payload.type = updates.type;
+  if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.price !== undefined) payload.price = updates.price;
+  if (updates.cost !== undefined) payload.cost = updates.cost;
+  if (updates.images !== undefined) payload.images = updates.images;
+  
+  if (updates.category !== undefined) payload.category_id = await getCategoryId(updates.category);
+  if (updates.supplier !== undefined) payload.supplier_id = await getSupplierId(updates.supplier);
+
+  const { data: prod, error } = await supabase
+    .from('products')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  if (updates.stock !== undefined && prod.type === PRODUCT_TYPES.STOCK) {
+    await supabase
+      .from('inventory')
+      .update({ quantity: updates.stock })
+      .eq('product_id', id);
+  }
+
+  return prod;
 }
 
-export function updateProduct(id, updates) {
-  const products = getProducts();
-  const idx = products.findIndex(p => p.id === id);
-  if (idx === -1) return null;
-  products[idx] = { ...products[idx], ...updates };
-  saveProducts(products);
-  return products[idx];
-}
-
-export function deleteProduct(id) {
-  saveProducts(getProducts().filter(p => p.id !== id));
+export async function deleteProduct(id) {
+  await supabase.from('products').delete().eq('id', id);
 }
 
 // ─── Sales CRUD ───────────────────────────────
 
-export function getSales() {
-  try {
-    const raw = localStorage.getItem(SALES_KEY);
-    if (!raw) { localStorage.setItem(SALES_KEY, JSON.stringify(SEED_SALES)); return SEED_SALES; }
-    return JSON.parse(raw);
-  } catch { return SEED_SALES; }
-}
+export async function getSales() {
+  const bizId = await getBusinessId();
+  const { data, error } = await supabase
+    .from('order_items')
+    .select(`
+      id, quantity, unit_price, unit_cost,
+      product_id,
+      orders!inner(id, business_id, created_at, source, pay_method),
+      products(name, type, categories(slug))
+    `)
+    .eq('orders.business_id', bizId)
+    .order('orders(created_at)', { ascending: false });
 
-export function saveSales(sales) {
-  localStorage.setItem(SALES_KEY, JSON.stringify(sales));
-}
-
-/**
- * Record a sale and update product inventory accordingly.
- * @param {string} productId
- * @param {{ salePrice: number, quantity: number, delivery: string, notes: string, saleDate: string }} saleData
- */
-export function recordSale(productId, saleData) {
-  const products = getProducts();
-  const idx      = products.findIndex(p => p.id === productId);
-  if (idx === -1) return;
-
-  const product  = products[idx];
-  const qty      = Number(saleData.quantity) || 1;
-  const sp       = Number(saleData.salePrice) || product.price;
-  const totalCost   = product.cost * qty;
-  const totalRevenue = sp * qty;
-  const profit   = totalRevenue - totalCost;
-  const margin   = Math.round((profit / totalCost) * 100);
-  const daysToSell = product.createdAt
-    ? Math.floor((Date.now() - new Date(product.createdAt)) / (1000 * 60 * 60 * 24))
-    : 0;
-
-  // ── Update product stock ──
-  const newStock = Math.max(0, (product.stock || 1) - qty);
-  let newStatus = product.status;
-
-  if (product.type === PRODUCT_TYPES.ONE_OFF || newStock === 0) {
-    newStatus = STATUSES.SOLD;
+  if (error) {
+    console.error(error);
+    return [];
   }
 
-  products[idx] = {
-    ...product,
-    stock:      newStock,
-    status:     newStatus,
-    daysToSell: product.daysToSell ?? daysToSell,
-    lastSoldAt: new Date().toISOString(),
-  };
-  saveProducts(products);
-
-  // ── Record the sale ──
-  const saleRecord = {
-    id:          `s${Date.now()}`,
-    productId,
-    productName: product.name,
-    category:    product.category,
-    type:        product.type,
-    cost:        product.cost,
-    salePrice:   sp,
-    quantity:    qty,
-    profit,
-    margin,
-    saleDate:    saleData.saleDate || new Date().toISOString(),
-    delivery:    saleData.delivery || DELIVERY_METHODS.PICKUP,
-    notes:       saleData.notes || '',
-  };
-
-  const sales = getSales();
-  sales.unshift(saleRecord);
-  saveSales(sales);
-  return saleRecord;
+  return data.map(item => ({
+    id: item.id,
+    orderId: item.orders.id,
+    productId: item.product_id,
+    productName: item.products?.name,
+    category: item.products?.categories?.slug || 'hogar',
+    type: item.products?.type,
+    cost: item.unit_cost,
+    salePrice: item.unit_price,
+    quantity: item.quantity,
+    profit: (item.unit_price - item.unit_cost) * item.quantity,
+    margin: Math.round(((item.unit_price - item.unit_cost) / item.unit_cost) * 100) || 0,
+    saleDate: item.orders.created_at,
+    delivery: item.orders.source || 'pickup',
+    notes: ''
+  }));
 }
 
-export function deleteSale(id) {
-  saveSales(getSales().filter(s => s.id !== id));
+export async function recordSale({ productId, quantity, delivery, notes }) {
+  const bizId = await getBusinessId();
+
+  // 1. Get Product
+  const { data: prod } = await supabase.from('products').select('*, inventory(quantity)').eq('id', productId).single();
+  if (!prod) throw new Error("Product not found");
+
+  // 2. Create Order
+  const { data: order } = await supabase.from('orders').insert([{
+    business_id: bizId,
+    total: prod.price * quantity,
+    source: delivery
+  }]).select().single();
+
+  // 3. Create Order Item
+  const { data: orderItem } = await supabase.from('order_items').insert([{
+    order_id: order.id,
+    product_id: prod.id,
+    quantity: quantity,
+    unit_price: prod.price,
+    unit_cost: prod.cost
+  }]).select().single();
+
+  // 4. Update Inventory / Status
+  if (prod.type === PRODUCT_TYPES.ONE_OFF) {
+    await supabase.from('products').update({ status: STATUSES.SOLD }).eq('id', prod.id);
+  } else {
+    const currentStock = prod.inventory?.quantity || 0;
+    const newStock = Math.max(0, currentStock - quantity);
+    await supabase.from('inventory').update({ quantity: newStock }).eq('product_id', prod.id);
+    if (newStock === 0) {
+      await supabase.from('products').update({ status: STATUSES.OUT_OF_STOCK }).eq('id', prod.id);
+    }
+  }
+
+  return orderItem;
 }
 
-// ─── Analytics ────────────────────────────────
+export async function deleteSale(id) {
+  // id here is the order_items id. To keep it simple, we just delete the item (and optionally the order if empty, but cascade handles some of this)
+  const { data: item } = await supabase.from('order_items').select('order_id').eq('id', id).single();
+  if (item) {
+    await supabase.from('orders').delete().eq('id', item.order_id);
+  }
+}
 
-export function getStats() {
-  const products = getProducts();
-  const sales    = getSales();
+export async function getTopProducts() {
+  const sales = await getSales();
+  const acc = {};
+  for (const s of sales) {
+    if (!acc[s.productId]) {
+      acc[s.productId] = { name: s.productName, category: s.category, units: 0, profit: 0, type: s.type };
+    }
+    acc[s.productId].units += s.quantity;
+    acc[s.productId].profit += s.profit;
+  }
+  return Object.values(acc).sort((a, b) => b.units - a.units);
+}
+
+export async function getSalesForMonth(year, month) {
+  const sales = await getSales();
+  return sales.filter(s => {
+    const d = new Date(s.saleDate);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+}
+
+export async function getStats() {
+  const products = await getProducts();
+  const sales    = await getSales();
   const active   = products.filter(p => p.status === STATUSES.AVAILABLE);
   const sold     = products.filter(p => p.status === STATUSES.SOLD);
   const margins  = active.map(p => ((p.price - p.cost) / p.cost) * 100);
@@ -203,16 +281,12 @@ export function getStats() {
     totalValue,
     totalRevenue,
     totalProfit,
-    totalUnitsSold,
-    lowStock: active.filter(p => (p.stock || 0) <= 2 && p.type === PRODUCT_TYPES.STOCK).length,
+    totalUnitsSold
   };
 }
 
-/**
- * Returns sales aggregated by month for the past N months.
- */
-export function getMonthlySummary(months = 6) {
-  const sales = getSales();
+export async function getMonthlySummary(months = 6) {
+  const sales = await getSales();
   const result = [];
 
   for (let i = months - 1; i >= 0; i--) {
@@ -220,7 +294,7 @@ export function getMonthlySummary(months = 6) {
     d.setDate(1);
     d.setMonth(d.getMonth() - i);
     const year  = d.getFullYear();
-    const month = d.getMonth(); // 0-indexed
+    const month = d.getMonth();
 
     const mSales = sales.filter(s => {
       const sd = new Date(s.saleDate);
@@ -242,40 +316,8 @@ export function getMonthlySummary(months = 6) {
   return result;
 }
 
-/**
- * Returns sales for a specific year+month.
- */
-export function getSalesForMonth(year, month) {
-  return getSales().filter(s => {
-    const d = new Date(s.saleDate);
-    return d.getFullYear() === year && d.getMonth() === month;
-  });
-}
-
-/**
- * Top selling products by profit.
- */
-export function getTopProducts(limit = 5) {
-  const sales = getSales();
-  const map   = {};
-  sales.forEach(s => {
-    if (!map[s.productId]) {
-      map[s.productId] = { name: s.productName, category: s.category, revenue: 0, profit: 0, units: 0 };
-    }
-    map[s.productId].revenue += s.salePrice * s.quantity;
-    map[s.productId].profit  += s.profit;
-    map[s.productId].units   += s.quantity;
-  });
-  return Object.values(map)
-    .sort((a, b) => b.profit - a.profit)
-    .slice(0, limit);
-}
-
-/**
- * Sales breakdown by category.
- */
-export function getCategoryBreakdown() {
-  const sales = getSales();
+export async function getCategoryBreakdown() {
+  const sales = await getSales();
   const map   = {};
   sales.forEach(s => {
     if (!map[s.category]) map[s.category] = { revenue: 0, profit: 0, units: 0 };
@@ -286,15 +328,11 @@ export function getCategoryBreakdown() {
   return map;
 }
 
-// ─── Auth ────────────────────────────────────
-
 export function checkPassword(pw) { return pw === ADMIN_PASSWORD; }
-
-// ─── Messenger CTA ───────────────────────────
 
 export const MESSENGER_URL = 'https://m.me/61574976372140';
 
 export function getMessengerLink(productName) {
-  const msg = encodeURIComponent(`Hola! Vi el "${productName}" en el catálogo, ¿está disponible? 😊`);
-  return `https://m.me/61574976372140?text=${msg}`;
+  const msg = encodeURIComponent(`¡Hola! Me interesa el producto "${productName}". ¿Aún lo tienen disponible?`);
+  return `${MESSENGER_URL}?text=${msg}`;
 }

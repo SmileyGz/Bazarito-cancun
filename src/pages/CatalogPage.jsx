@@ -11,13 +11,18 @@ export default function CatalogPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
-    setProducts(getProducts());
+    async function load() {
+      setProducts(await getProducts());
+    }
+    load();
   }, []);
 
   // Re-load on visibility (when admin makes changes)
   useEffect(() => {
-    function onVisible() {
-      if (document.visibilityState === 'visible') setProducts(getProducts());
+    async function onVisible() {
+      if (document.visibilityState === 'visible') {
+        setProducts(await getProducts());
+      }
     }
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);

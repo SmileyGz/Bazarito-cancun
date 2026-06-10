@@ -10,8 +10,14 @@ export default function SalesLog({ onDelete }) {
   const [year,  setYear]  = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [filterCat, setFilterCat] = useState('all');
+  const [allSales, setAllSales] = useState([]);
 
-  const allSales = getSales();
+  React.useEffect(() => {
+    async function load() {
+      setAllSales(await getSales());
+    }
+    load();
+  }, []);
 
   // Filter by selected month + category
   const filtered = allSales.filter(s => {
@@ -38,9 +44,9 @@ export default function SalesLog({ onDelete }) {
   }
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('¿Eliminar este registro de venta?')) return;
-    deleteSale(id);
+    await deleteSale(id);
     onDelete();
   }
 

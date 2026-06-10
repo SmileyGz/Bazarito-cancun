@@ -53,9 +53,12 @@ export default function AdminPage() {
   const [refresh, setRefresh]   = useState(0);
 
   const reload = useCallback(() => {
-    setProducts(getProducts());
-    setStats(getStats());
-    setRefresh(r => r + 1);
+    async function doReload() {
+      setProducts(await getProducts());
+      setStats(await getStats());
+      setRefresh(r => r + 1);
+    }
+    doReload();
   }, []);
 
   useEffect(() => { if (authed) reload(); }, [authed, reload]);
@@ -63,22 +66,22 @@ export default function AdminPage() {
   function handleLogin() { sessionStorage.setItem('bazarito_admin', '1'); setAuthed(true); }
   function handleLogout() { sessionStorage.removeItem('bazarito_admin'); setAuthed(false); }
 
-  function handleSave(data) {
-    if (editing) { updateProduct(editing.id, data); setToast('✅ Producto actualizado'); }
-    else { addProduct(data); setToast('✅ Producto agregado'); }
+  async function handleSave(data) {
+    if (editing) { await updateProduct(editing.id, data); setToast('✅ Producto actualizado'); }
+    else { await addProduct(data); setToast('✅ Producto agregado'); }
     setFormOpen(false); setEditing(null); reload();
   }
 
-  function handleSaleConfirm(saleData) {
-    recordSale(saleProduct.id, saleData);
+  async function handleSaleConfirm(saleData) {
+    await recordSale({ productId: saleProduct.id, ...saleData });
     setSaleProduct(null);
     setToast(`🔴 Venta registrada — $${(saleData.salePrice * saleData.quantity).toLocaleString('es-MX')} MXN`);
     reload();
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('¿Eliminar este producto?')) return;
-    deleteProduct(id); setToast('🗑️ Producto eliminado'); reload();
+    await deleteProduct(id); setToast('🗑️ Producto eliminado'); reload();
   }
 
   if (!authed) return <LoginGate onSuccess={handleLogin} />;

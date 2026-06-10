@@ -85,9 +85,18 @@ function CategoryDonut({ breakdown }) {
 // ─── Main Insights Panel ────────────────────────
 export default function InsightsPanel() {
   const [months]    = useState(6);
-  const monthly     = getMonthlySummary(months);
-  const topProducts = getTopProducts(5);
-  const breakdown   = getCategoryBreakdown();
+  const [monthly, setMonthly] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [breakdown, setBreakdown] = useState({});
+
+  React.useEffect(() => {
+    async function load() {
+      setMonthly(await getMonthlySummary(months));
+      setTopProducts(await getTopProducts(5));
+      setBreakdown(await getCategoryBreakdown());
+    }
+    load();
+  }, [months]);
 
   const totalRevenue = monthly.reduce((s, m) => s + m.revenue, 0);
   const totalProfit  = monthly.reduce((s, m) => s + m.profit, 0);
