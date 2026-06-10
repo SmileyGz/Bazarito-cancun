@@ -13,9 +13,9 @@ export const CATEGORIES = [
 export const PRODUCT_TYPES = { STOCK: 'stock', ONE_OFF: 'one_off' };
 
 export const STATUSES = {
-  AVAILABLE:    'available',
-  SOLD:         'sold',
-  OUT_OF_STOCK: 'out_of_stock',
+  AVAILABLE:    'active',
+  SOLD:         'archived',
+  OUT_OF_STOCK: 'draft',
 };
 
 export const DELIVERY_METHODS = {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ImagePlus, Trash2, Sparkles, Loader2 } from 'lucide-react';
+import { X, ImagePlus, Trash2 } from 'lucide-react';
 import { CATEGORIES, PRODUCT_TYPES, STATUSES } from '../data/store';
-import { generateProductCopy } from '../lib/gemini';
 
 const MAX_IMAGES = 3;
+const MAX_SIZE_MB = 2; // compress target
 
 const EMPTY = {
   name: '', description: '', category: 'hogar',
@@ -35,22 +35,16 @@ function compressImage(file, maxW = 900, quality = 0.80) {
 }
 
 export default function AdminProductForm({ product, onSave, onClose }) {
-  const [form, setForm]           = useState(EMPTY);
-  const [dragging, setDragging]   = useState(false);
+  const [form, setForm] = useState(EMPTY);
+  const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [saving, setSaving]       = useState(false);
+  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-
-  // AI state
-  const [aiOpen, setAiOpen]       = useState(false);
-  const [aiKeywords, setAiKeywords] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError]     = useState('');
-
   const fileRef = useRef();
 
   useEffect(() => {
     if (product) {
+      // Support legacy `image` string field → convert to images array
       const imgs = product.images?.length
         ? product.images
         : (product.image ? [product.image] : []);
@@ -91,31 +85,6 @@ export default function AdminProductForm({ product, onSave, onClose }) {
   function onDragLeave() { setDragging(false); }
   function onDrop(e) { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }
 
-  // ── AI text generation ────────────────────────
-
-  async function handleAiGenerate() {
-    if (!aiKeywords.trim()) { setAiError('Escribe al menos una palabra clave.'); return; }
-    setAiLoading(true);
-    setAiError('');
-    try {
-      const result = await generateProductCopy({
-        keywords: aiKeywords,
-        category: form.category,
-        price: form.price || '',
-      });
-      setForm(prev => ({
-        ...prev,
-        name: result.name || prev.name,
-        description: result.description || prev.description,
-      }));
-      setAiOpen(false);
-      setAiKeywords('');
-    } catch (err) {
-      setAiError(err.message || 'Error al conectar con la IA. Intenta de nuevo.');
-    }
-    setAiLoading(false);
-  }
-
   // ── Submit ────────────────────────────────────
 
   async function handleSubmit(e) {
@@ -128,11 +97,11 @@ export default function AdminProductForm({ product, onSave, onClose }) {
         cost:   Number(form.cost),
         price:  Number(form.price),
         stock:  Number(form.stock),
-        image:  form.images?.[0] || '',
+        image:  form.images?.[0] || '',   // keep legacy field in sync
         images: form.images || [],
       });
     } catch (err) {
-      setSaveError(err.message || 'Error al guardar. Intenta de nuevo.');
+      setSaveError(err.message || 'Error al guardar.');
       setSaving(false);
     }
   }
@@ -142,7 +111,6 @@ export default function AdminProductForm({ product, onSave, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box apf-modal" onClick={e => e.stopPropagation()}>
-
         {/* Header */}
         <div className="apf-header">
           <h3>{product ? 'Editar Producto' : 'Nuevo Producto'}</h3>
@@ -152,11 +120,12 @@ export default function AdminProductForm({ product, onSave, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit} className="apf-form">
-
           {/* ── Images ── */}
           <div className="input-group">
             <label>Fotos del producto <span style={{ color:'var(--text-muted)', fontWeight:400 }}>(máx. {MAX_IMAGES})</span></label>
+
             <div className="apf-images-grid">
+              {/* Existing images */}
               {(form.images || []).map((src, idx) => (
                 <div key={idx} className="apf-img-thumb">
                   <img src={src} alt={`Foto ${idx+1}`} />
@@ -166,6 +135,8 @@ export default function AdminProductForm({ product, onSave, onClose }) {
                   </button>
                 </div>
               ))}
+
+              {/* Drop zone / add button — show only if slots remain */}
               {canAddMore && (
                 <div
                   className={`apf-dropzone ${dragging ? 'apf-dropzone-active' : ''} ${uploading ? 'apf-dropzone-loading' : ''}`}
@@ -185,6 +156,8 @@ export default function AdminProductForm({ product, onSave, onClose }) {
                   )}
                 </div>
               )}
+
+              {/* Hidden file input */}
               <input
                 ref={fileRef}
                 type="file"
@@ -194,6 +167,7 @@ export default function AdminProductForm({ product, onSave, onClose }) {
                 onChange={e => { addFiles(e.target.files); e.target.value = ''; }}
               />
             </div>
+
             {(form.images?.length || 0) > 0 && (
               <p style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>
                 La primera foto es la principal. Toca 🗑️ para eliminar.
@@ -201,70 +175,19 @@ export default function AdminProductForm({ product, onSave, onClose }) {
             )}
           </div>
 
-          {/* ── Name + AI Button ── */}
+          {/* ── Name ── */}
           <div className="input-group">
-            <div className="apf-label-row">
-              <label>Nombre del producto *</label>
-              <button
-                type="button"
-                className="btn-ai-trigger"
-                onClick={() => setAiOpen(v => !v)}
-                title="Generar nombre y descripción con IA"
-              >
-                <Sparkles size={14} />
-                Generar con IA
-              </button>
-            </div>
-
-            {/* AI Panel */}
-            {aiOpen && (
-              <div className="ai-panel">
-                <p className="ai-panel-hint">
-                  Describe brevemente el producto con palabras clave (ej: "cable usb tipo c", "organizador cocina bambu", "collar perro luminoso")
-                </p>
-                <div className="ai-panel-row">
-                  <input
-                    className="input"
-                    placeholder="Palabras clave del producto..."
-                    value={aiKeywords}
-                    onChange={e => { setAiKeywords(e.target.value); setAiError(''); }}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAiGenerate())}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-ai"
-                    onClick={handleAiGenerate}
-                    disabled={aiLoading}
-                  >
-                    {aiLoading
-                      ? <><Loader2 size={14} className="ai-spin" /> Generando...</>
-                      : <><Sparkles size={14} /> Generar</>
-                    }
-                  </button>
-                </div>
-                {aiError && <p className="ai-error">{aiError}</p>}
-              </div>
-            )}
-
-            <input
-              className="input"
-              required
-              value={form.name}
-              onChange={e => set('name', e.target.value)}
-              placeholder="Ej: Organizador de cocina"
-            />
+            <label>Nombre del producto *</label>
+            <input className="input" required value={form.name}
+              onChange={e => set('name', e.target.value)} placeholder="Ej: Organizador de cocina" />
           </div>
 
           {/* ── Description ── */}
           <div className="input-group">
             <label>Descripción</label>
-            <textarea
-              className="textarea"
-              value={form.description}
+            <textarea className="textarea" value={form.description}
               onChange={e => set('description', e.target.value)}
-              placeholder="Describe brevemente el producto..."
-            />
+              placeholder="Describe brevemente el producto..." />
           </div>
 
           {/* ── Category + Type ── */}
@@ -339,21 +262,15 @@ export default function AdminProductForm({ product, onSave, onClose }) {
             <span>⭐ Destacado en el catálogo</span>
           </label>
 
-          {/* Save error */}
           {saveError && (
             <div className="apf-save-error">⚠️ {saveError}</div>
           )}
 
           {/* ── Actions ── */}
           <div className="apf-actions">
-            <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving}>
-              Cancelar
-            </button>
+            <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" className="btn btn-teal" disabled={saving}>
-              {saving
-                ? <><Loader2 size={15} className="ai-spin" /> Guardando...</>
-                : (product ? 'Guardar cambios' : 'Agregar producto')
-              }
+              {saving ? 'Guardando...' : (product ? 'Guardar cambios' : 'Agregar producto')}
             </button>
           </div>
         </form>
@@ -367,82 +284,6 @@ export default function AdminProductForm({ product, onSave, onClose }) {
           .apf-header h3 { font-size: 1.2rem; }
           .apf-form { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
           .apf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-          /* Label row with AI button */
-          .apf-label-row {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 6px;
-          }
-          .apf-label-row label { margin-bottom: 0 !important; }
-
-          /* AI trigger button */
-          .btn-ai-trigger {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 4px 12px;
-            font-size: 0.78rem; font-weight: 700;
-            color: #7C3AED;
-            background: linear-gradient(135deg, #EDE9FE, #F3E8FF);
-            border: 1.5px solid #C4B5FD;
-            border-radius: var(--radius-full);
-            cursor: pointer;
-            transition: all var(--dur-fast);
-            white-space: nowrap;
-          }
-          .btn-ai-trigger:hover {
-            background: linear-gradient(135deg, #DDD6FE, #EDE9FE);
-            border-color: #7C3AED;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(124,58,237,0.2);
-          }
-
-          /* AI Panel */
-          .ai-panel {
-            background: linear-gradient(135deg, #FAF5FF, #F3E8FF);
-            border: 1.5px solid #C4B5FD;
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
-            display: flex; flex-direction: column; gap: 10px;
-            margin-bottom: 8px;
-          }
-          .ai-panel-hint {
-            font-size: 0.78rem; color: #6D28D9;
-            margin: 0; line-height: 1.5;
-          }
-          .ai-panel-row {
-            display: flex; gap: 8px; align-items: stretch;
-          }
-          .ai-panel-row .input {
-            flex: 1;
-            border-color: #C4B5FD;
-          }
-          .ai-panel-row .input:focus { border-color: #7C3AED; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
-
-          .btn-ai {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 0 18px;
-            background: linear-gradient(135deg, #7C3AED, #9333EA);
-            color: white; font-weight: 700; font-size: 0.85rem;
-            border-radius: var(--radius-md);
-            border: none; cursor: pointer;
-            transition: all var(--dur-fast);
-            white-space: nowrap;
-          }
-          .btn-ai:hover:not(:disabled) {
-            background: linear-gradient(135deg, #6D28D9, #7C3AED);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 14px rgba(124,58,237,0.35);
-          }
-          .btn-ai:disabled { opacity: 0.65; cursor: wait; }
-
-          .ai-spin { animation: spin 0.7s linear infinite; }
-          @keyframes spin { to { transform: rotate(360deg); } }
-
-          .ai-error {
-            font-size: 0.78rem; color: #C62828;
-            background: #FFEBEE; border: 1px solid #EF9A9A;
-            border-radius: var(--radius-sm); padding: 6px 10px;
-            margin: 0;
-          }
 
           /* Images grid */
           .apf-images-grid {
@@ -509,6 +350,7 @@ export default function AdminProductForm({ product, onSave, onClose }) {
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
           }
+          @keyframes spin { to { transform: rotate(360deg); } }
 
           /* Margin */
           .apf-margin { padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 600; }
@@ -541,7 +383,6 @@ export default function AdminProductForm({ product, onSave, onClose }) {
             .apf-actions { flex-direction: column; }
             .apf-actions .btn { width: 100%; justify-content: center; }
             .apf-images-grid { grid-template-columns: repeat(3, 1fr); }
-            .apf-label-row { flex-wrap: wrap; gap: 6px; }
           }
         `}</style>
       </div>
