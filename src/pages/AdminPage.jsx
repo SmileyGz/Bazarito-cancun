@@ -68,9 +68,17 @@ export default function AdminPage() {
   function handleLogout() { sessionStorage.removeItem('bazarito_admin'); setAuthed(false); }
 
   async function handleSave(data) {
-    if (editing) { await updateProduct(editing.id, data); setToast('✅ Producto actualizado'); }
-    else { await addProduct(data); setToast('✅ Producto agregado'); }
-    setFormOpen(false); setEditing(null); reload();
+    // Re-throw on error so AdminProductForm can show the error state
+    if (editing) {
+      await updateProduct(editing.id, data);
+      setToast('✅ Producto actualizado');
+    } else {
+      await addProduct(data);
+      setToast('✅ Producto agregado');
+    }
+    setFormOpen(false);
+    setEditing(null);
+    reload();
   }
 
   async function handleSaleConfirm(saleData) {
