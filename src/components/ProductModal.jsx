@@ -85,7 +85,6 @@ export default function ProductModal({ product, onClose }) {
   const isOneOff = product.type   === PRODUCT_TYPES.ONE_OFF;
   const catLabel = CATEGORIES.find(c => c.id === product.category)?.label || product.category;
   const ph       = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', emoji: '📦' };
-  const margin   = Math.round(((product.price - product.cost) / product.cost) * 100);
 
   // Support images[] array and legacy image string
   const images = product.images?.length
@@ -136,9 +135,6 @@ export default function ProductModal({ product, onClose }) {
               <p style={{ fontSize:'0.8rem', color:'var(--text-muted)', fontWeight:600, marginBottom:2 }}>PRECIO</p>
               <span className="pmodal-price">${product.price.toLocaleString('es-MX')} MXN</span>
             </div>
-            <span className="badge badge-yellow" style={{ fontSize:'0.85rem', padding:'6px 14px' }}>
-              +{margin}% margen
-            </span>
           </div>
 
           {/* Delivery info */}
