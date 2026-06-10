@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, LogOut, Eye, Package, TrendingUp, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import LoginGate     from '../components/LoginGate';
 import StatsBar      from '../components/StatsBar';
 import InventoryTable from '../components/InventoryTable';
@@ -116,9 +117,9 @@ export default function AdminPage() {
 
           {/* Actions */}
           <div style={{ display:'flex',gap:8 }}>
-            <a href="/" className="btn btn-outline btn-sm" target="_blank" rel="noopener noreferrer">
+            <Link to="/" className="btn btn-outline btn-sm" target="_blank" rel="noopener noreferrer">
               <Eye size={14} /> <span className="hide-mobile">Catálogo</span>
-            </a>
+            </Link>
             {tab === 'inventory' && (
               <button className="btn btn-sm btn-teal" onClick={() => { setEditing(null); setFormOpen(true); }}>
                 <Plus size={15} /> <span className="hide-mobile">Agregar</span>
