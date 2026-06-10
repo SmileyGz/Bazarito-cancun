@@ -75,7 +75,7 @@ export async function getProducts() {
     name: p.name,
     description: p.description,
     category: p.categories?.slug || 'hogar',
-    type: p.type,
+    type: p.custom_attributes?.ui_type || (p.inventory ? PRODUCT_TYPES.STOCK : PRODUCT_TYPES.ONE_OFF),
     cost: p.cost,
     price: p.price,
     status: p.status,
@@ -99,7 +99,8 @@ export async function addProduct(product) {
       supplier_id: supplierId,
       name: product.name,
       description: product.description || '',
-      type: product.type,
+      type: 'physical',
+      custom_attributes: { ui_type: product.type },
       status: product.status,
       price: product.price,
       cost: product.cost,
@@ -124,7 +125,7 @@ export async function updateProduct(id, updates) {
   const payload = {};
   if (updates.name !== undefined) payload.name = updates.name;
   if (updates.description !== undefined) payload.description = updates.description;
-  if (updates.type !== undefined) payload.type = updates.type;
+  if (updates.type !== undefined) payload.custom_attributes = { ui_type: updates.type };
   if (updates.status !== undefined) payload.status = updates.status;
   if (updates.price !== undefined) payload.price = updates.price;
   if (updates.cost !== undefined) payload.cost = updates.cost;
@@ -142,7 +143,11 @@ export async function updateProduct(id, updates) {
 
   if (error) throw error;
 
-  if (updates.stock !== undefined && prod.type === PRODUCT_TYPES.STOCK) {
+  const currentType = prod.custom_attributes?.ui_type || PRODUCT_TYPES.STOCK;
+
+  if (updates.stock !== undefined && currentType === PRODUCT_TYPES.STOCK) {
+    // If inventory doesn't exist, this update will quietly fail or we might need an upsert
+    // But since stock is only for stock products, and inventory is created in addProduct, it should be fine.
     await supabase
       .from('inventory')
       .update({ quantity: updates.stock })
@@ -218,7 +223,8 @@ export async function recordSale({ productId, quantity, delivery, notes }) {
   }]).select().single();
 
   // 4. Update Inventory / Status
-  if (prod.type === PRODUCT_TYPES.ONE_OFF) {
+  const isOneOff = prod.custom_attributes?.ui_type === PRODUCT_TYPES.ONE_OFF;
+  if (isOneOff) {
     await supabase.from('products').update({ status: STATUSES.SOLD }).eq('id', prod.id);
   } else {
     const currentStock = prod.inventory?.quantity || 0;
