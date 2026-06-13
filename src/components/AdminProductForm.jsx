@@ -10,6 +10,7 @@ const EMPTY = {
   type: PRODUCT_TYPES.STOCK, cost: '', price: '',
   status: STATUSES.AVAILABLE, stock: 1,
   supplier: '', images: [], featured: false,
+  variants: [],
 };
 
 // Compress & resize image to base64 via canvas
@@ -94,11 +95,12 @@ export default function AdminProductForm({ product, onSave, onClose }) {
     try {
       await onSave({
         ...form,
-        cost:   Number(form.cost),
-        price:  Number(form.price),
-        stock:  Number(form.stock),
-        image:  form.images?.[0] || '',   // keep legacy field in sync
-        images: form.images || [],
+        cost:     Number(form.cost),
+        price:    Number(form.price),
+        stock:    Number(form.stock),
+        image:    form.images?.[0] || '',
+        images:   form.images || [],
+        variants: (form.variants || []).filter(v => v.key.trim() && v.value.trim()),
       });
     } catch (err) {
       setSaveError(err.message || 'Error al guardar.');
@@ -188,6 +190,54 @@ export default function AdminProductForm({ product, onSave, onClose }) {
             <textarea className="textarea" value={form.description}
               onChange={e => set('description', e.target.value)}
               placeholder="Describe brevemente el producto..." />
+          </div>
+
+          {/* ── Variants / Detalles ── */}
+          <div className="input-group">
+            <label>Detalles del producto <span style={{ color:'var(--text-muted)', fontWeight:400 }}>(talla, color, capacidad, etc. — opcional)</span></label>
+            <div className="apf-variants">
+              {(form.variants || []).map((v, i) => (
+                <div key={i} className="apf-variant-row">
+                  <input
+                    className="input apf-variant-key"
+                    placeholder="Ej: Talla"
+                    value={v.key}
+                    onChange={e => {
+                      const next = [...(form.variants || [])];
+                      next[i] = { ...next[i], key: e.target.value };
+                      set('variants', next);
+                    }}
+                  />
+                  <input
+                    className="input apf-variant-val"
+                    placeholder="Ej: M"
+                    value={v.value}
+                    onChange={e => {
+                      const next = [...(form.variants || [])];
+                      next[i] = { ...next[i], value: e.target.value };
+                      set('variants', next);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="apf-variant-remove"
+                    onClick={() => set('variants', (form.variants || []).filter((_, j) => j !== i))}
+                    title="Quitar"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {(form.variants || []).length < 6 && (
+                <button
+                  type="button"
+                  className="apf-variant-add"
+                  onClick={() => set('variants', [...(form.variants || []), { key: '', value: '' }])}
+                >
+                  + Agregar detalle
+                </button>
+              )}
+            </div>
           </div>
 
           {/* ── Category + Type ── */}
@@ -377,6 +427,28 @@ export default function AdminProductForm({ product, onSave, onClose }) {
             display: flex; gap: 10px; justify-content: flex-end;
             padding-top: 8px; border-top: 1.5px solid var(--border);
           }
+
+          /* Variants editor */
+          .apf-variants { display: flex; flex-direction: column; gap: 8px; }
+          .apf-variant-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+          .apf-variant-key, .apf-variant-val { min-width: 0; }
+          .apf-variant-remove {
+            width: 30px; height: 30px; flex-shrink: 0;
+            background: #FFEBEE; border: 1px solid #EF9A9A;
+            border-radius: var(--radius-sm);
+            color: #C62828; font-size: 1.1rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; line-height: 1; transition: all var(--dur-fast);
+          }
+          .apf-variant-remove:hover { background: #FFCDD2; }
+          .apf-variant-add {
+            align-self: flex-start;
+            background: var(--bg-muted); border: 1.5px dashed var(--border);
+            border-radius: var(--radius-md); padding: 8px 16px;
+            font-size: 0.82rem; font-weight: 600; color: var(--teal);
+            cursor: pointer; transition: all var(--dur-fast);
+          }
+          .apf-variant-add:hover { background: #E8F4F3; border-color: var(--teal); }
 
           @media (max-width: 480px) {
             .apf-row { grid-template-columns: 1fr; }

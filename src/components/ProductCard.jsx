@@ -11,6 +11,7 @@ const PLACEHOLDER_COLORS = {
   ofertas:    { bg: '#FFF8E1', accent: '#F57F17', emoji: '🔥' },
   muebles:    { bg: '#E3F2FD', accent: '#1565C0', emoji: '🛋️' },
   electronica:{ bg: '#F3E5F5', accent: '#7B1FA2', emoji: '📱' },
+  personal:   { bg: '#FFF0F5', accent: '#C2185B', emoji: '👗' },
 };
 
 function ProductImage({ product }) {
@@ -78,6 +79,17 @@ export default function ProductCard({ product, onClick }) {
       <div className="pcard-body">
         <p className="pcard-cat">{catLabel}</p>
         <h3 className="pcard-name">{product.name}</h3>
+
+        {/* Variant chips */}
+        {product.variants?.length > 0 && (
+          <div className="pcard-variants">
+            {product.variants.slice(0, 3).map((v, i) => (
+              <span key={i} className="pcard-variant-chip">
+                {v.key}: <strong>{v.value}</strong>
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="pcard-price-row">
           <span className="pcard-price">
@@ -194,6 +206,23 @@ export default function ProductCard({ product, onClick }) {
           font-size: 0.85rem !important;
           padding: 10px 16px !important;
           margin-top: 4px;
+        }
+        .pcard-variants {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+        .pcard-variant-chip {
+          font-size: 0.68rem;
+          background: var(--bg-muted);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-full);
+          padding: 2px 8px;
+          color: var(--text-secondary);
+          white-space: nowrap;
+        }
+        .pcard-variant-chip strong {
+          color: var(--text-primary);
         }
         @media (max-width: 480px) {
           .pcard-img { height: 150px; }

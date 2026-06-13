@@ -28,11 +28,11 @@ const DASHES = [
   { color:'#FFD000', top:'35%', right:'10%', w:16, rot:'50deg',  delay:'0.6s' },
 ];
 
-// Round sticker badges (NOT button-shaped — circles/seals)
-const BADGES = [
-  { text: 'SALE', top: '6%',  right: '5%',  bg: '#E84B09', color: '#fff',     rotate: '12deg',  delay: '0.4s', size: '52px' },
-  { text: '50%', top: '62%', left: '38%',   bg: '#1A7A6D', color: '#fff',     rotate: '-8deg',  delay: '0.7s', size: '46px' },
-  { text: 'NEW', top: '80%', left: '26%',   bg: '#FFD000', color: '#1A1208',  rotate: '5deg',   delay: '1s',   size: '44px' },
+// Fun floating object stickers (sticker-tape / washi-tape style)
+const STICKER_OBJECTS = [
+  { emoji: '🐶', label: 'Dog', top: '5%',  right: '5%',  bg: '#FFF3E0', border: '#FFB74D', rotate: '8deg',  delay: '0.2s', width: '64px' },
+  { emoji: '🍋', label: 'Lemon', top: '60%', left: '38%',  bg: '#FFFDE7', border: '#FFD600', rotate: '-6deg', delay: '0.6s', width: '58px' },
+  { emoji: '💕', label: 'Heart', top: '78%', left: '26%',  bg: '#FCE4EC', border: '#F48FB1', rotate: '4deg',  delay: '1s',   width: '54px' },
 ];
 
 export default function HeroSection() {
@@ -66,16 +66,17 @@ export default function HeroSection() {
         }} />
       ))}
 
-      {/* Round sticker badges */}
-      {BADGES.map((b, i) => (
-        <div key={i} className="hero-badge" style={{
-          top: b.top, left: b.left, right: b.right,
-          background: b.bg, color: b.color,
-          transform: `rotate(${b.rotate})`,
-          animationDelay: b.delay,
-          width: b.size, height: b.size,
+      {/* Fun floating sticker-tape objects */}
+      {STICKER_OBJECTS.map((s, i) => (
+        <div key={i} className="hero-sticker-obj" style={{
+          top: s.top, left: s.left, right: s.right,
+          background: s.bg,
+          border: `2px solid ${s.border}`,
+          transform: `rotate(${s.rotate})`,
+          animationDelay: s.delay,
+          width: s.width,
         }}>
-          {b.text}
+          <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>{s.emoji}</span>
         </div>
       ))}
 
@@ -165,21 +166,18 @@ export default function HeroSection() {
           animation: heroFloat 4s ease-in-out infinite alternate;
         }
 
-        /* Round circular badge stickers — NOT button-shaped */
-        .hero-badge {
+        /* Sticker-tape floating objects */
+        .hero-sticker-obj {
           position: absolute;
           z-index: 2;
-          font-family: var(--font-display);
-          font-weight: 900;
-          font-size: 0.72rem;
-          letter-spacing: 0.05em;
-          border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          text-align: center;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           pointer-events: none;
-          box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.13);
           animation: heroFloat 3.5s ease-in-out infinite alternate;
-          line-height: 1.2;
+          padding: 8px;
         }
 
         /* Content */

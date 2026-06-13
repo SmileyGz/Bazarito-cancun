@@ -13,7 +13,8 @@ export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
   const [sortKey, setSortKey]   = useState('createdAt');
   const [sortDir, setSortDir]   = useState('desc');
   const [filterCat, setFilterCat]       = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  // Default: show only active products — sold items live in "Historial de Ventas"
+  const [filterStatus, setFilterStatus] = useState(STATUSES.AVAILABLE);
 
   function toggleSort(key) {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');

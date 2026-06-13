@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, LogOut, Eye, Package, TrendingUp, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Plus, LogOut, Eye, Package, TrendingUp, ClipboardList, AlertTriangle, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LoginGate     from '../components/LoginGate';
 import StatsBar      from '../components/StatsBar';
@@ -8,6 +8,7 @@ import AdminProductForm from '../components/AdminProductForm';
 import SaleModal     from '../components/SaleModal';
 import InsightsPanel from '../components/InsightsPanel';
 import SalesLog      from '../components/SalesLog';
+import FinancePanel  from '../components/FinancePanel';
 import {
   getProducts, addProduct, updateProduct, deleteProduct,
   recordSale, getStats, STATUSES, PRODUCT_TYPES,
@@ -40,6 +41,7 @@ const TABS = [
   { id: 'inventory', label: 'Inventario', icon: <Package size={17} /> },
   { id: 'sales',     label: 'Ventas',     icon: <ClipboardList size={17} /> },
   { id: 'insights',  label: 'Insights',   icon: <TrendingUp size={17} /> },
+  { id: 'finance',   label: 'Finanzas',   icon: <DollarSign size={17} /> },
 ];
 
 export default function AdminPage() {
@@ -84,7 +86,8 @@ export default function AdminPage() {
   async function handleSaleConfirm(saleData) {
     await recordSale({ productId: saleProduct.id, ...saleData });
     setSaleProduct(null);
-    setToast(`🔴 Venta registrada — $${(saleData.salePrice * saleData.quantity).toLocaleString('es-MX')} MXN`);
+    const total = (Number(saleData.salePrice) * saleData.quantity) + (saleData.deliveryFeeAmount || 0);
+    setToast(`🔴 Venta registrada — $${total.toLocaleString('es-MX')} MXN`);
     reload();
   }
 
@@ -100,20 +103,39 @@ export default function AdminPage() {
       {/* Header */}
       <header className="admin-header">
         <div className="container admin-header-inner">
-          <div className="admin-logo">
-            <div className="logo-icon" style={{ width:36,height:36,fontSize:'1.1rem' }}>☀️</div>
-            <div>
-              <div style={{ display:'flex',gap:4 }}>
-                <span className="logo-bazarito" style={{ fontSize:'0.9rem' }}>Bazarito</span>
-                <span className="logo-cancun"   style={{ fontSize:'0.9rem' }}>Cancún</span>
+          {/* Row 1: logo + actions */}
+          <div className="admin-header-row1">
+            <div className="admin-logo">
+              <div className="logo-icon" style={{ width:36,height:36,fontSize:'1.1rem' }}>☀️</div>
+              <div>
+                <div style={{ display:'flex',gap:4 }}>
+                  <span className="logo-bazarito" style={{ fontSize:'0.9rem' }}>Bazarito</span>
+                  <span className="logo-cancun"   style={{ fontSize:'0.9rem' }}>Cancún</span>
+                </div>
+                <span style={{ fontSize:'0.65rem',color:'var(--text-muted)',fontWeight:700,letterSpacing:'0.07em',textTransform:'uppercase' }}>
+                  Panel Admin
+                </span>
               </div>
-              <span style={{ fontSize:'0.65rem',color:'var(--text-muted)',fontWeight:700,letterSpacing:'0.07em',textTransform:'uppercase' }}>
-                Panel Admin
-              </span>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display:'flex',gap:8,marginLeft:'auto' }}>
+              <Link to="/" className="btn btn-outline btn-sm" target="_blank" rel="noopener noreferrer">
+                <Eye size={14} /> <span className="hide-xs">Catálogo</span>
+              </Link>
+              {tab === 'inventory' && (
+                <button className="btn btn-sm btn-teal hide-xs" onClick={() => { setEditing(null); setFormOpen(true); }}>
+                  <Plus size={15} /> Agregar
+                </button>
+              )}
+              <button className="btn btn-icon btn-sm" onClick={handleLogout} title="Salir"
+                style={{ background:'var(--bg-muted)',color:'var(--text-muted)' }}>
+                <LogOut size={15} />
+              </button>
             </div>
           </div>
 
-          {/* Tabs */}
+          {/* Row 2: Tabs — always full width */}
           <div className="admin-tabs">
             {TABS.map(t => (
               <button key={t.id} className={`admin-tab ${tab === t.id ? 'admin-tab-active' : ''}`}
@@ -121,22 +143,6 @@ export default function AdminPage() {
                 {t.icon} <span>{t.label}</span>
               </button>
             ))}
-          </div>
-
-          {/* Actions */}
-          <div style={{ display:'flex',gap:8 }}>
-            <Link to="/" className="btn btn-outline btn-sm" target="_blank" rel="noopener noreferrer">
-              <Eye size={14} /> <span className="hide-mobile">Catálogo</span>
-            </Link>
-            {tab === 'inventory' && (
-              <button className="btn btn-sm btn-teal" onClick={() => { setEditing(null); setFormOpen(true); }}>
-                <Plus size={15} /> <span className="hide-mobile">Agregar</span>
-              </button>
-            )}
-            <button className="btn btn-icon btn-sm" onClick={handleLogout} title="Salir"
-              style={{ background:'var(--bg-muted)',color:'var(--text-muted)' }}>
-              <LogOut size={15} />
-            </button>
           </div>
         </div>
       </header>
@@ -193,6 +199,12 @@ export default function AdminPage() {
             <InsightsPanel key={refresh} />
           </div>
         )}
+
+        {tab === 'finance' && (
+          <div className="animate-fade-in">
+            <FinancePanel />
+          </div>
+        )}
       </main>
 
       {/* Modals */}
@@ -217,8 +229,16 @@ export default function AdminPage() {
           position: sticky; top: 0; z-index: 100;
         }
         .admin-header-inner {
-          display: flex; align-items: center; gap: 16px;
-          height: 60px; flex-wrap: nowrap;
+          display: flex;
+          flex-direction: column;
+          padding: 10px 0;
+          gap: 8px;
+        }
+        .admin-header-row1 {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-height: 40px;
         }
         .admin-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
@@ -227,13 +247,11 @@ export default function AdminPage() {
           background: var(--bg-muted);
           border-radius: var(--radius-full);
           padding: 3px;
-          flex: 1;
-          max-width: 340px;
-          margin: 0 auto;
+          width: 100%;
         }
         .admin-tab {
           flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 6px 12px;
+          padding: 7px 10px;
           border-radius: var(--radius-full);
           font-family: var(--font-display);
           font-size: 0.82rem; font-weight: 700;
@@ -264,13 +282,11 @@ export default function AdminPage() {
         .admin-section-header h2 { font-size: 1.4rem; }
         .admin-section-header p  { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
 
-        @media (max-width: 768px) {
-          .admin-tabs { max-width: 260px; }
-          .admin-tab span { display: none; }
-          .admin-tab { padding: 6px 10px; }
+        /* hide-xs: only hide on very small screens */
+        @media (max-width: 400px) {
+          .hide-xs { display: none; }
         }
         @media (max-width: 560px) {
-          .admin-header-inner { height: auto; padding: 10px 0; flex-wrap: wrap; }
           .hide-mobile { display: none; }
         }
       `}</style>

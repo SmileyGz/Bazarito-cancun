@@ -3,11 +3,12 @@ import { supabase } from '../lib/supabase';
 export const ADMIN_PASSWORD = 'bazarito2024'; // Change this!
 
 export const CATEGORIES = [
-  { id: 'all',      label: 'Todo',          emoji: '📦' },
-  { id: 'hogar',    label: 'Hogar y Decor', emoji: '🏠' },
-  { id: 'gadgets',  label: 'Gadgets y Tech',emoji: '🔌' },
-  { id: 'mascotas', label: 'Mascotas',      emoji: '🐾' },
-  { id: 'bienestar',label: 'Bienestar',     emoji: '✨' },
+  { id: 'all',      label: 'Todo',           emoji: '📦' },
+  { id: 'hogar',    label: 'Hogar y Decor',  emoji: '🏠' },
+  { id: 'gadgets',  label: 'Gadgets y Tech', emoji: '🔌' },
+  { id: 'mascotas', label: 'Mascotas',       emoji: '🐾' },
+  { id: 'bienestar',label: 'Bienestar',      emoji: '✨' },
+  { id: 'personal', label: 'Moda y Personal',emoji: '👗' },
 ];
 
 export const PRODUCT_TYPES = { STOCK: 'stock', ONE_OFF: 'one_off' };
@@ -82,6 +83,7 @@ export async function getProducts() {
     stock: p.inventory?.quantity || 0,
     supplier: p.suppliers?.name || '',
     images: p.images || [],
+    variants: p.custom_attributes?.variants || [],
     createdAt: p.created_at
   }));
 }
@@ -100,7 +102,7 @@ export async function addProduct(product) {
       name: product.name,
       description: product.description || '',
       type: 'physical',
-      custom_attributes: { ui_type: product.type },
+      custom_attributes: { ui_type: product.type, variants: product.variants || [] },
       status: product.status,
       price: product.price,
       cost: product.cost,
@@ -125,12 +127,21 @@ export async function updateProduct(id, updates) {
   const payload = {};
   if (updates.name !== undefined) payload.name = updates.name;
   if (updates.description !== undefined) payload.description = updates.description;
-  if (updates.type !== undefined) payload.custom_attributes = { ui_type: updates.type };
   if (updates.status !== undefined) payload.status = updates.status;
   if (updates.price !== undefined) payload.price = updates.price;
   if (updates.cost !== undefined) payload.cost = updates.cost;
   if (updates.images !== undefined) payload.images = updates.images;
-  
+  // Merge custom_attributes so ui_type and variants both survive
+  if (updates.type !== undefined || updates.variants !== undefined) {
+    const { data: existing } = await supabase.from('products').select('custom_attributes').eq('id', id).single();
+    const prev = existing?.custom_attributes || {};
+    payload.custom_attributes = {
+      ...prev,
+      ...(updates.type !== undefined     ? { ui_type: updates.type }        : {}),
+      ...(updates.variants !== undefined ? { variants: updates.variants }   : {}),
+    };
+  }
+
   if (updates.category !== undefined) payload.category_id = await getCategoryId(updates.category);
   if (updates.supplier !== undefined) payload.supplier_id = await getSupplierId(updates.supplier);
 
@@ -199,26 +210,49 @@ export async function getSales() {
   }));
 }
 
-export async function recordSale({ productId, quantity, delivery, notes }) {
+export async function recordSale({
+  productId, quantity, delivery, notes,
+  saleDate, salePrice, payMethod,
+  deliveryFee, deliveryFeeAmount,
+  clientName, clientPhone, clientEmail
+}) {
   const bizId = await getBusinessId();
 
   // 1. Get Product
   const { data: prod } = await supabase.from('products').select('*, inventory(quantity)').eq('id', productId).single();
   if (!prod) throw new Error("Product not found");
 
-  // 2. Create Order
-  const { data: order } = await supabase.from('orders').insert([{
-    business_id: bizId,
-    total: prod.price * quantity,
-    source: delivery
-  }]).select().single();
+  // Use exact sale price entered by admin (not product list price)
+  const unitPrice = salePrice !== undefined ? Number(salePrice) : prod.price;
+  const delivFee  = deliveryFee && deliveryFeeAmount ? Number(deliveryFeeAmount) : 0;
+  const orderTotal = (unitPrice * quantity) + delivFee;
 
-  // 3. Create Order Item
+  // Build composite notes with client info
+  const clientMeta = [clientName, clientPhone, clientEmail].filter(Boolean).join(' | ');
+  const fullNotes  = [notes, clientMeta ? `Cliente: ${clientMeta}` : ''].filter(Boolean).join(' · ');
+
+  // 2. Create Order — override created_at with admin-provided saleDate
+  const orderPayload = {
+    business_id: bizId,
+    total: orderTotal,
+    source: delivery,
+    pay_method: payMethod || 'cash',
+    ...(fullNotes ? { notes: fullNotes } : {}),
+  };
+  // If saleDate differs from today, set created_at explicitly
+  const today = new Date().toISOString().split('T')[0];
+  if (saleDate && saleDate !== today) {
+    orderPayload.created_at = new Date(saleDate + 'T12:00:00').toISOString();
+  }
+
+  const { data: order } = await supabase.from('orders').insert([orderPayload]).select().single();
+
+  // 3. Create Order Item with exact unit_price entered
   const { data: orderItem } = await supabase.from('order_items').insert([{
     order_id: order.id,
     product_id: prod.id,
     quantity: quantity,
-    unit_price: prod.price,
+    unit_price: unitPrice,
     unit_cost: prod.cost
   }]).select().single();
 
@@ -342,3 +376,124 @@ export function getMessengerLink(productName) {
   const msg = encodeURIComponent(`¡Hola! Me interesa el producto "${productName}". ¿Aún lo tienen disponible?`);
   return `${MESSENGER_URL}?text=${msg}`;
 }
+
+// ─── Finance CRUD ─────────────────────────────
+
+export async function getFinanceTransactions() {
+  const { data, error } = await supabase
+    .from('finance_transactions')
+    .select('*')
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching finance transactions:', error);
+    return [];
+  }
+  return data;
+}
+
+export async function addFinanceTransaction(tx) {
+  const { data, error } = await supabase
+    .from('finance_transactions')
+    .insert([{
+      date: tx.date,
+      description: tx.description,
+      amount: tx.amount,
+      type: tx.type,
+      category: tx.category,
+      notes: tx.notes || null
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateFinanceTransaction(id, updates) {
+  const { data, error } = await supabase
+    .from('finance_transactions')
+    .update({
+      date: updates.date,
+      description: updates.description,
+      amount: updates.amount,
+      type: updates.type,
+      category: updates.category,
+      notes: updates.notes || null
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteFinanceTransaction(id) {
+  const { error } = await supabase
+    .from('finance_transactions')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function getFinancePortfolio() {
+  const { data, error } = await supabase
+    .from('finance_portfolio')
+    .select('*')
+    .order('category', { ascending: true })
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching finance portfolio:', error);
+    return [];
+  }
+  return data;
+}
+
+export async function addFinancePortfolioAsset(asset) {
+  const { data, error } = await supabase
+    .from('finance_portfolio')
+    .insert([{
+      name: asset.name,
+      category: asset.category,
+      value: asset.value || 0,
+      icon: asset.icon || '💰',
+      notes: asset.notes || null
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateFinancePortfolioAsset(id, updates) {
+  const { data, error } = await supabase
+    .from('finance_portfolio')
+    .update({
+      name: updates.name,
+      category: updates.category,
+      value: updates.value,
+      icon: updates.icon,
+      notes: updates.notes
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteFinancePortfolioAsset(id) {
+  const { error } = await supabase
+    .from('finance_portfolio')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+

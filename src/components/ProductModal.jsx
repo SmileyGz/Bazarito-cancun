@@ -10,6 +10,7 @@ const PLACEHOLDER_COLORS = {
   ofertas:    { bg: '#FFF8E1', emoji: '🔥' },
   muebles:    { bg: '#E3F2FD', emoji: '🛋️' },
   electronica:{ bg: '#F3E5F5', emoji: '📱' },
+  personal:   { bg: '#FFF0F5', emoji: '👗' },
 };
 
 // Image gallery with prev/next arrows
@@ -129,6 +130,18 @@ export default function ProductModal({ product, onClose }) {
             <p className="pmodal-desc">{product.description}</p>
           )}
 
+          {/* Variants */}
+          {product.variants?.length > 0 && (
+            <div className="pmodal-variants">
+              {product.variants.map((v, i) => (
+                <div key={i} className="pmodal-variant-row">
+                  <span className="pmodal-variant-key">{v.key}</span>
+                  <span className="pmodal-variant-val">{v.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Price */}
           <div className="pmodal-price-row">
             <div>
@@ -143,7 +156,7 @@ export default function ProductModal({ product, onClose }) {
               <MapPin size={16} className="pmodal-dicon" />
               <div>
                 <p className="pmodal-dlabel">Pickup gratis</p>
-                <p className="pmodal-dval">Región 96, Cancún</p>
+                <p className="pmodal-dval">Región 96, Cancún &middot; Producto listo en 15–30 min</p>
               </div>
             </div>
             <div className="pmodal-ditem">
@@ -157,8 +170,18 @@ export default function ProductModal({ product, onClose }) {
               <Clock size={16} className="pmodal-dicon" />
               <div>
                 <p className="pmodal-dlabel">Horario nocturno</p>
-                <p className="pmodal-dval">Después de 8 PM +$30</p>
+                <p className="pmodal-dval">Después de 8 PM $100</p>
               </div>
+            </div>
+          </div>
+
+          {/* Payment Methods */}
+          <div className="pmodal-pay">
+            <p className="pmodal-pay-title">Métodos de pago</p>
+            <div className="pmodal-pay-methods">
+              <span className="pmodal-pay-method">💳 Mercado Pago</span>
+              <span className="pmodal-pay-method">💵 Efectivo al recibir <span className="pmodal-pay-note">(envío $80 · depósito $50)</span></span>
+              <span className="pmodal-pay-method">🏪 Efectivo en recolección <span className="pmodal-pay-note">(listo en 15–30 min)</span></span>
             </div>
           </div>
 
@@ -240,6 +263,37 @@ export default function ProductModal({ product, onClose }) {
           background: var(--bg-muted); padding: 16px; border-radius: var(--radius-md);
           text-align: center; font-weight: 600; color: var(--text-secondary);
           font-size: 0.9rem; display: flex; flex-direction: column; align-items: center;
+        }
+        /* Variants */
+        .pmodal-variants {
+          display: flex; flex-direction: column; gap: 0;
+          border: 1.5px solid var(--border); border-radius: var(--radius-md);
+          overflow: hidden;
+        }
+        .pmodal-variant-row {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 8px 14px; font-size: 0.85rem;
+          border-bottom: 1px solid var(--border);
+        }
+        .pmodal-variant-row:last-child { border-bottom: none; }
+        .pmodal-variant-key { color: var(--text-muted); font-weight: 600; }
+        .pmodal-variant-val { color: var(--text-primary); font-weight: 700; }
+        /* Payment methods */
+        .pmodal-pay {
+          padding: 14px; background: var(--bg-muted);
+          border: 1.5px solid var(--border); border-radius: var(--radius-md);
+        }
+        .pmodal-pay-title {
+          font-size: 0.72rem; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.06em;
+          color: var(--text-muted); margin-bottom: 8px;
+        }
+        .pmodal-pay-methods { display: flex; flex-direction: column; gap: 6px; }
+        .pmodal-pay-method {
+          font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);
+        }
+        .pmodal-pay-note {
+          font-size: 0.78rem; color: var(--text-muted); font-weight: 400;
         }
       `}</style>
     </div>

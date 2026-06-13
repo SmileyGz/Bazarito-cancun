@@ -1,0 +1,9 @@
+/* Project Specific Brand Colors */
+:root {
+    /* Modify these to match the project's brand */
+    --project-primary: #E84B09; /* Bazarito Orange */
+    --project-secondary: #FFD000; /* Bazarito Yellow */
+    --project-text: #1A1208;
+    --project-bg: #FFFBEE; /* Warm Off-White */
+    --project-link: #1A7A6D; /* Teal for links */
+}
