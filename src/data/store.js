@@ -383,7 +383,7 @@ export function getMessengerLink(productName) {
 
 export async function getFinanceTransactions() {
   const { data, error } = await supabase
-    .from('finance_transactions')
+    .from('biz_finance_transactions')
     .select('*')
     .order('date', { ascending: false })
     .order('created_at', { ascending: false });
@@ -397,7 +397,7 @@ export async function getFinanceTransactions() {
 
 export async function addFinanceTransaction(tx) {
   const { data, error } = await supabase
-    .from('finance_transactions')
+    .from('biz_finance_transactions')
     .insert([{
       date: tx.date,
       description: tx.description,
@@ -415,7 +415,7 @@ export async function addFinanceTransaction(tx) {
 
 export async function updateFinanceTransaction(id, updates) {
   const { data, error } = await supabase
-    .from('finance_transactions')
+    .from('biz_finance_transactions')
     .update({
       date: updates.date,
       description: updates.description,
@@ -434,7 +434,7 @@ export async function updateFinanceTransaction(id, updates) {
 
 export async function deleteFinanceTransaction(id) {
   const { error } = await supabase
-    .from('finance_transactions')
+    .from('biz_finance_transactions')
     .delete()
     .eq('id', id);
 
@@ -443,7 +443,7 @@ export async function deleteFinanceTransaction(id) {
 
 export async function getFinancePortfolio() {
   const { data, error } = await supabase
-    .from('finance_portfolio')
+    .from('biz_finance_portfolio')
     .select('*')
     .order('category', { ascending: true })
     .order('name', { ascending: true });
@@ -457,7 +457,7 @@ export async function getFinancePortfolio() {
 
 export async function addFinancePortfolioAsset(asset) {
   const { data, error } = await supabase
-    .from('finance_portfolio')
+    .from('biz_finance_portfolio')
     .insert([{
       name: asset.name,
       category: asset.category,
@@ -474,7 +474,7 @@ export async function addFinancePortfolioAsset(asset) {
 
 export async function updateFinancePortfolioAsset(id, updates) {
   const { data, error } = await supabase
-    .from('finance_portfolio')
+    .from('biz_finance_portfolio')
     .update({
       name: updates.name,
       category: updates.category,
@@ -492,7 +492,7 @@ export async function updateFinancePortfolioAsset(id, updates) {
 
 export async function deleteFinancePortfolioAsset(id) {
   const { error } = await supabase
-    .from('finance_portfolio')
+    .from('biz_finance_portfolio')
     .delete()
     .eq('id', id);
 

@@ -8,30 +8,28 @@ import {
   getFinancePortfolio, addFinancePortfolioAsset, updateFinancePortfolioAsset, deleteFinancePortfolioAsset 
 } from '../data/store';
 
-// Standard categories list
+// Standard business categories list
 const FINANCE_CATEGORIES = [
-  'Personal / Vida',
-  'Súper / Comida',
-  'Servicios',
-  'Transporte',
-  'Marketing / Publicidad',
-  'Envíos / Logística',
-  'Empaque / Materiales',
-  'Inventario / Productos',
-  'Renta',
-  'Intereses / Inversiones',
-  'Ventas',
-  'Freelance / Upwork',
-  'Depósito / Transferencia',
+  'Ventas Online',
+  'Ventas Físicas',
+  'Ingreso por Envíos',
+  'Costo de Inventario (COGS)',
+  'Logística y Envíos',
+  'Empaque e Insumos',
+  'Comisiones (Plataformas)',
+  'Marketing y Ads',
+  'Software y Suscripciones',
+  'Sueldo / Retiro de Dueño',
+  'Reembolsos / Devoluciones',
   'Otros'
 ];
 
 const PORTFOLIO_CATEGORIES = [
-  'Ahorro',
-  'Inversiones',
-  'Liquidez',
-  'Préstamos',
-  'Otros'
+  'Efectivo / Caja Líquida',
+  'Bancos',
+  'Valor de Inventario',
+  'Cuentas por Cobrar',
+  'Cuentas por Pagar (Pasivo)'
 ];
 
 export default function FinancePanel() {
@@ -115,25 +113,47 @@ export default function FinancePanel() {
     });
   }, [transactions, selectedYear, searchQuery]);
 
-  // Calculations for KPI Cards
+  // Calculations for Business KPI Cards
   const kpis = useMemo(() => {
     let income = 0;
     let expense = 0;
     
-    // Sum only filtered transactions
+    let salesRevenue = 0;
+    let cogs = 0;
+    let marketingSpend = 0;
+    let salesTxCount = 0;
+    
     filteredTxs.forEach(t => {
       const amt = Number(t.amount);
-      if (t.type === 'income') income += amt;
-      else expense += amt;
+      if (t.type === 'income') {
+        income += amt;
+        if (t.category.includes('Ventas')) {
+          salesRevenue += amt;
+          salesTxCount += 1;
+        }
+      } else {
+        expense += amt;
+        if (t.category === 'Costo de Inventario (COGS)') {
+          cogs += amt;
+        } else if (t.category === 'Marketing y Ads') {
+          marketingSpend += amt;
+        }
+      }
     });
 
     const portfolioTotal = portfolio.reduce((sum, item) => sum + Number(item.value), 0);
+    const grossMargin = salesRevenue > 0 ? ((salesRevenue - cogs) / salesRevenue) * 100 : 0;
+    const aov = salesTxCount > 0 ? (salesRevenue / salesTxCount) : 0;
+    const cac = salesTxCount > 0 ? (marketingSpend / salesTxCount) : 0;
 
     return {
       income,
       expense,
       net: income - expense,
-      portfolioTotal
+      portfolioTotal,
+      grossMargin,
+      aov,
+      cac
     };
   }, [filteredTxs, portfolio]);
 
@@ -337,42 +357,38 @@ export default function FinancePanel() {
           <div className="kpi-grid">
             <div className="kpi-card glass-panel gradient-border-teal">
               <div className="kpi-header">
-                <h3>Flujo de Caja Neto</h3>
-                <Landmark size={18} style={{ color: 'var(--teal)' }} />
-              </div>
-              <p className={`amount ${kpis.net >= 0 ? 'text-green' : 'text-red'}`}>
-                {formatMXN(kpis.net)}
-              </p>
-              <span className="trend">
-                {kpis.net >= 0 ? '↗ Superávit Mensual' : '↘ Déficit Mensual'}
-              </span>
-            </div>
-
-            <div className="kpi-card glass-panel">
-              <div className="kpi-header">
-                <h3>Total Ingresos</h3>
+                <h3>Margen Bruto</h3>
                 <TrendingUp size={18} style={{ color: 'var(--success)' }} />
               </div>
-              <p className="amount text-green">{formatMXN(kpis.income)}</p>
-              <span className="trend-muted">Para el año seleccionado</span>
+              <p className="amount text-green">{kpis.grossMargin.toFixed(1)}%</p>
+              <span className="trend">Rentabilidad antes de gastos fijos</span>
             </div>
 
             <div className="kpi-card glass-panel">
               <div className="kpi-header">
-                <h3>Total Gastos</h3>
+                <h3>Ticket Promedio (AOV)</h3>
+                <Landmark size={18} style={{ color: 'var(--teal)' }} />
+              </div>
+              <p className="amount">{formatMXN(kpis.aov)}</p>
+              <span className="trend-muted">Valor por transacción de venta</span>
+            </div>
+
+            <div className="kpi-card glass-panel">
+              <div className="kpi-header">
+                <h3>Costo de Adq. (CAC)</h3>
                 <TrendingDown size={18} style={{ color: 'var(--red)' }} />
               </div>
-              <p className="amount text-red">{formatMXN(kpis.expense)}</p>
-              <span className="trend-muted">Para el año seleccionado</span>
+              <p className="amount text-red">{formatMXN(kpis.cac)}</p>
+              <span className="trend-muted">Gasto Marketing / Ventas</span>
             </div>
 
             <div className="kpi-card glass-panel highlight-bg-gold">
               <div className="kpi-header">
-                <h3>Patrimonio & Ahorro</h3>
+                <h3>Flujo de Caja Neto</h3>
                 <Wallet size={18} style={{ color: '#C8973A' }} />
               </div>
-              <p className="amount text-gold">{formatMXN(kpis.portfolioTotal)}</p>
-              <span className="trend-muted">Suma total de activos actuales</span>
+              <p className={`amount ${kpis.net >= 0 ? 'text-gold' : 'text-red'}`}>{formatMXN(kpis.net)}</p>
+              <span className="trend-muted">Ingresos Totales vs Gastos Totales</span>
             </div>
           </div>
 
