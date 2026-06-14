@@ -1,20 +1,32 @@
 import React, { useState } from 'react';
-import { Lock, Eye, EyeOff } from 'lucide-react';
-import { checkPassword } from '../data/store';
+import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export default function LoginGate({ onSuccess }) {
-  const [pw, setPw]     = useState('');
-  const [show, setShow] = useState(false);
-  const [err, setErr]   = useState(false);
+  const [email, setEmail] = useState('');
+  const [pw, setPw]       = useState('');
+  const [show, setShow]   = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr]     = useState(null);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (checkPassword(pw)) {
-      onSuccess();
-    } else {
-      setErr(true);
+    setLoading(true);
+    setErr(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pw
+    });
+
+    setLoading(false);
+
+    if (error) {
+      setErr(error.message);
       setPw('');
-      setTimeout(() => setErr(false), 2000);
+      setTimeout(() => setErr(null), 3000);
+    } else {
+      if (onSuccess) onSuccess();
     }
   }
 
@@ -28,6 +40,19 @@ export default function LoginGate({ onSuccess }) {
         <p>Acceso exclusivo para Bazarito Cancún</p>
 
         <form onSubmit={handleSubmit} className="gate-form">
+          <div className="input-group" style={{ marginBottom: '10px' }}>
+            <label>Correo Electrónico</label>
+            <input
+              type="email"
+              className="input"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="tu@correo.com"
+              required
+              autoFocus
+            />
+          </div>
+
           <div className="input-group">
             <label>Contraseña</label>
             <div className="gate-input-wrap">
@@ -37,16 +62,17 @@ export default function LoginGate({ onSuccess }) {
                 value={pw}
                 onChange={e => setPw(e.target.value)}
                 placeholder="Ingresa la contraseña"
-                autoFocus
+                required
               />
               <button type="button" className="gate-eye" onClick={() => setShow(!show)}>
                 {show ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {err && <span className="gate-err">Contraseña incorrecta 🔒</span>}
+            {err && <span className="gate-err">{err} 🔒</span>}
           </div>
-          <button type="submit" className="btn btn-teal" style={{ width:'100%', justifyContent:'center' }}>
-            Entrar al panel
+          
+          <button type="submit" className="btn btn-teal" style={{ width:'100%', justifyContent:'center' }} disabled={loading}>
+            {loading ? <Loader2 size={18} className="spin" /> : 'Entrar al panel'}
           </button>
         </form>
 

@@ -28,9 +28,11 @@ export default function CatalogPage() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
+  // Only show available products in public view — hide sold/archived
+  const available = products.filter(p => p.status === 'active');
   const filtered = activeCategory === 'all'
-    ? products
-    : products.filter(p => p.category === activeCategory);
+    ? available
+    : available.filter(p => p.category === activeCategory);
 
   return (
     <>

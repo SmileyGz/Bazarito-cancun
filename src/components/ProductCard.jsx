@@ -1,6 +1,6 @@
 import React from 'react';
-import { MessageCircle, Tag, Repeat } from 'lucide-react';
-import { STATUSES, PRODUCT_TYPES, CATEGORIES, getMessengerLink } from '../data/store';
+import { Tag, Repeat } from 'lucide-react';
+import { STATUSES, PRODUCT_TYPES, CATEGORIES } from '../data/store';
 
 // Vibrant placeholder colours per category
 const PLACEHOLDER_COLORS = {
@@ -44,11 +44,6 @@ export default function ProductCard({ product, onClick }) {
   const isSold     = product.status === STATUSES.SOLD;
   const isOneOff   = product.type   === PRODUCT_TYPES.ONE_OFF;
   const catLabel   = CATEGORIES.find(c => c.id === product.category)?.label || product.category;
-
-  function handleMessenger(e) {
-    e.stopPropagation();
-    window.open(getMessengerLink(product.name), '_blank');
-  }
 
   return (
     <div className={`pcard ${isSold ? 'pcard-sold' : ''}`} onClick={() => onClick(product)}>
@@ -97,13 +92,6 @@ export default function ProductCard({ product, onClick }) {
           </span>
           <span className="pcard-currency">MXN</span>
         </div>
-
-        {!isSold && (
-          <button className="messenger-btn pcard-btn" onClick={handleMessenger}>
-            <MessageCircle size={18} />
-            Preguntar
-          </button>
-        )}
       </div>
 
       <style>{`

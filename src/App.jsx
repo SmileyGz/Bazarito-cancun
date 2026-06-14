@@ -8,7 +8,7 @@ function CatalogLayout() {
   const navigate = useNavigate();
   return (
     <>
-      <Navbar onAdminClick={() => navigate('/admin')} />
+      <Navbar />
       <CatalogPage />
     </>
   );

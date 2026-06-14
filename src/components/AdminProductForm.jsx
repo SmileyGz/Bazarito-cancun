@@ -10,7 +10,7 @@ const EMPTY = {
   type: PRODUCT_TYPES.STOCK, cost: '', price: '',
   status: STATUSES.AVAILABLE, stock: 1,
   supplier: '', images: [], featured: false,
-  variants: [],
+  variants: [], delivery_enabled: true,
 };
 
 // Compress & resize image to base64 via canvas
@@ -311,6 +311,21 @@ export default function AdminProductForm({ product, onSave, onClose }) {
             <input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} />
             <span>⭐ Destacado en el catálogo</span>
           </label>
+
+          {/* ── Delivery toggle ── */}
+          <label className="apf-check">
+            <input
+              type="checkbox"
+              checked={form.delivery_enabled !== false}
+              onChange={e => set('delivery_enabled', e.target.checked)}
+            />
+            <span>🚚 Permite envío a domicilio</span>
+          </label>
+          {form.delivery_enabled === false && (
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: -8, paddingLeft: 28 }}>
+              Los clientes solo verán la opción de recolección en persona para este producto.
+            </p>
+          )}
 
           {saveError && (
             <div className="apf-save-error">⚠️ {saveError}</div>

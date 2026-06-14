@@ -13,6 +13,7 @@ import {
   getProducts, addProduct, updateProduct, deleteProduct,
   recordSale, getStats, STATUSES, PRODUCT_TYPES,
 } from '../data/store';
+import { supabase } from '../lib/supabase';
 
 // ─── Toast ────────────────────────────────────
 function Toast({ message, onDone }) {
@@ -45,7 +46,8 @@ const TABS = [
 ];
 
 export default function AdminPage() {
-  const [authed, setAuthed]     = useState(() => sessionStorage.getItem('bazarito_admin') === '1');
+  const [authed, setAuthed]     = useState(false);
+  const [loadingSession, setLoadingSession] = useState(true);
   const [tab, setTab]           = useState('inventory');
   const [products, setProducts] = useState([]);
   const [stats, setStats]       = useState({ total:0,active:0,sold:0,avgMargin:0,totalValue:0,totalRevenue:0,totalProfit:0,totalUnitsSold:0,lowStock:0 });
@@ -64,10 +66,25 @@ export default function AdminPage() {
     doReload();
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthed(!!session);
+      setLoadingSession(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthed(!!session);
+      setLoadingSession(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => { if (authed) reload(); }, [authed, reload]);
 
-  function handleLogin() { sessionStorage.setItem('bazarito_admin', '1'); setAuthed(true); }
-  function handleLogout() { sessionStorage.removeItem('bazarito_admin'); setAuthed(false); }
+  function handleLogout() { supabase.auth.signOut(); }
 
   async function handleSave(data) {
     // Re-throw on error so AdminProductForm can show the error state
@@ -84,11 +101,16 @@ export default function AdminPage() {
   }
 
   async function handleSaleConfirm(saleData) {
-    await recordSale({ productId: saleProduct.id, ...saleData });
-    setSaleProduct(null);
-    const total = (Number(saleData.salePrice) * saleData.quantity) + (saleData.deliveryFeeAmount || 0);
-    setToast(`🔴 Venta registrada — $${total.toLocaleString('es-MX')} MXN`);
-    reload();
+    try {
+      await recordSale({ productId: saleProduct.id, ...saleData });
+      setSaleProduct(null);
+      const total = (Number(saleData.salePrice) * saleData.quantity) + (saleData.deliveryFeeAmount || 0);
+      setToast(`🔴 Venta registrada — $${total.toLocaleString('es-MX')} MXN`);
+      reload();
+    } catch (err) {
+      setToast(`❌ Error al registrar: ${err.message}`);
+      console.error('handleSaleConfirm error:', err);
+    }
   }
 
   async function handleDelete(id) {
@@ -96,7 +118,8 @@ export default function AdminPage() {
     await deleteProduct(id); setToast('🗑️ Producto eliminado'); reload();
   }
 
-  if (!authed) return <LoginGate onSuccess={handleLogin} />;
+  if (loadingSession) return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Cargando...</div>;
+  if (!authed) return <LoginGate onSuccess={() => {}} />;
 
   return (
     <div className="admin-page">

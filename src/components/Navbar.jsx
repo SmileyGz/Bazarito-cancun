@@ -2,7 +2,7 @@ import React from 'react';
 import { ShoppingCart, Package } from 'lucide-react';
 import { MESSENGER_URL } from '../data/store';
 
-export default function Navbar({ onAdminClick }) {
+export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="container navbar-inner">
@@ -28,14 +28,6 @@ export default function Navbar({ onAdminClick }) {
             <ShoppingCart size={16} />
             <span className="hide-mobile">Preguntar</span>
           </a>
-          <button
-            className="btn btn-icon"
-            onClick={onAdminClick}
-            title="Panel Admin"
-            style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}
-          >
-            <Package size={18} />
-          </button>
         </div>
       </div>
 

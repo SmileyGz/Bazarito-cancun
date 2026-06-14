@@ -1,7 +1,5 @@
 import { supabase } from '../lib/supabase';
 
-export const ADMIN_PASSWORD = 'bazarito2024'; // Change this!
-
 export const CATEGORIES = [
   { id: 'all',      label: 'Todo',           emoji: '📦' },
   { id: 'hogar',    label: 'Hogar y Decor',  emoji: '🏠' },
@@ -84,6 +82,7 @@ export async function getProducts() {
     supplier: p.suppliers?.name || '',
     images: p.images || [],
     variants: p.custom_attributes?.variants || [],
+    delivery_enabled: p.custom_attributes?.delivery_enabled !== false, // default true
     createdAt: p.created_at
   }));
 }
@@ -102,7 +101,11 @@ export async function addProduct(product) {
       name: product.name,
       description: product.description || '',
       type: 'physical',
-      custom_attributes: { ui_type: product.type, variants: product.variants || [] },
+      custom_attributes: {
+        ui_type: product.type,
+        variants: product.variants || [],
+        delivery_enabled: product.delivery_enabled !== false,
+      },
       status: product.status,
       price: product.price,
       cost: product.cost,
@@ -131,14 +134,15 @@ export async function updateProduct(id, updates) {
   if (updates.price !== undefined) payload.price = updates.price;
   if (updates.cost !== undefined) payload.cost = updates.cost;
   if (updates.images !== undefined) payload.images = updates.images;
-  // Merge custom_attributes so ui_type and variants both survive
-  if (updates.type !== undefined || updates.variants !== undefined) {
+  // Merge custom_attributes so ui_type, variants, and delivery_enabled all survive
+  if (updates.type !== undefined || updates.variants !== undefined || updates.delivery_enabled !== undefined) {
     const { data: existing } = await supabase.from('products').select('custom_attributes').eq('id', id).single();
     const prev = existing?.custom_attributes || {};
     payload.custom_attributes = {
       ...prev,
-      ...(updates.type !== undefined     ? { ui_type: updates.type }        : {}),
-      ...(updates.variants !== undefined ? { variants: updates.variants }   : {}),
+      ...(updates.type !== undefined             ? { ui_type: updates.type }                       : {}),
+      ...(updates.variants !== undefined         ? { variants: updates.variants }                   : {}),
+      ...(updates.delivery_enabled !== undefined ? { delivery_enabled: updates.delivery_enabled }   : {}),
     };
   }
 
@@ -367,8 +371,6 @@ export async function getCategoryBreakdown() {
   });
   return map;
 }
-
-export function checkPassword(pw) { return pw === ADMIN_PASSWORD; }
 
 export const MESSENGER_URL = 'https://m.me/61574976372140';
 

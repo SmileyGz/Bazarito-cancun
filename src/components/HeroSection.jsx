@@ -2,20 +2,20 @@ import React from 'react';
 import { MessageCircle, Truck, MapPin, Star } from 'lucide-react';
 import { MESSENGER_URL } from '../data/store';
 
-// Floating sticker items scattered around the hero
+// Floating sticker items scattered around the hero — Bazarito Cancún themed
 const STICKERS = [
-  { emoji: '🛒', top: '8%',  left: '4%',  size: '2.8rem', rotate: '-12deg', delay: '0s',   duration: '3.2s' },
-  { emoji: '📦', top: '6%',  left: '18%', size: '2.2rem', rotate: '8deg',   delay: '0.4s', duration: '3.8s' },
-  { emoji: '👍', top: '5%',  right: '22%',size: '2.4rem', rotate: '-6deg',  delay: '0.2s', duration: '3.5s' },
-  { emoji: '🎧', top: '55%', left: '2%',  size: '2.6rem', rotate: '10deg',  delay: '0.6s', duration: '4s'   },
-  { emoji: '📱', top: '62%', left: '16%', size: '2.2rem', rotate: '-8deg',  delay: '0.8s', duration: '3.3s' },
-  { emoji: '✨', top: '20%', right: '4%', size: '2rem',   rotate: '15deg',  delay: '0.3s', duration: '2.8s' },
-  { emoji: '🛒', top: '58%', right: '3%', size: '2.5rem', rotate: '-10deg', delay: '0.5s', duration: '3.6s' },
-  { emoji: '🏷️', top: '72%', right: '18%',size: '2rem',   rotate: '6deg',   delay: '0.7s', duration: '4.2s' },
-  { emoji: '💫', top: '30%', left: '6%',  size: '1.8rem', rotate: '0deg',   delay: '1s',   duration: '3s'   },
-  { emoji: '🔌', top: '78%', left: '5%',  size: '2rem',   rotate: '-14deg', delay: '0.9s', duration: '3.7s' },
-  { emoji: '🏠', top: '15%', right: '8%', size: '2.2rem', rotate: '12deg',  delay: '0.1s', duration: '4.1s' },
-  { emoji: '🐾', top: '80%', right: '8%', size: '2rem',   rotate: '-5deg',  delay: '1.1s', duration: '3.4s' },
+  { emoji: '🌮', top: '8%',  left: '4%',  size: '2.8rem', rotate: '-12deg', delay: '0s',   duration: '3.2s' },
+  { emoji: '🌴', top: '6%',  left: '18%', size: '2.2rem', rotate: '8deg',   delay: '0.4s', duration: '3.8s' },
+  { emoji: '🛵', top: '5%',  right: '22%',size: '2.4rem', rotate: '-6deg',  delay: '0.2s', duration: '3.5s' },
+  { emoji: '🏠', top: '55%', left: '2%',  size: '2.6rem', rotate: '10deg',  delay: '0.6s', duration: '4s'   },
+  { emoji: '☀️', top: '62%', left: '16%', size: '2.2rem', rotate: '-8deg',  delay: '0.8s', duration: '3.3s' },
+  { emoji: '🐠', top: '20%', right: '4%', size: '2rem',   rotate: '15deg',  delay: '0.3s', duration: '2.8s' },
+  { emoji: '📦', top: '58%', right: '3%', size: '2.5rem', rotate: '-10deg', delay: '0.5s', duration: '3.6s' },
+  { emoji: '🌊', top: '72%', right: '18%',size: '2rem',   rotate: '6deg',   delay: '0.7s', duration: '4.2s' },
+  { emoji: '🥭', top: '30%', left: '6%',  size: '1.8rem', rotate: '0deg',   delay: '1s',   duration: '3s'   },
+  { emoji: '💧', top: '78%', left: '5%',  size: '2rem',   rotate: '-14deg', delay: '0.9s', duration: '3.7s' },
+  { emoji: '🐾', top: '15%', right: '8%', size: '2.2rem', rotate: '12deg',  delay: '0.1s', duration: '4.1s' },
+  { emoji: '🍋', top: '80%', right: '8%', size: '2rem',   rotate: '-5deg',  delay: '1.1s', duration: '3.4s' },
 ];
 
 // Colorful confetti dashes
@@ -26,13 +26,6 @@ const DASHES = [
   { color:'#1A7A6D', top:'75%', right:'30%', w:24, rot:'35deg',  delay:'0.3s' },
   { color:'#E84B09', top:'42%', left:'10%',  w:20, rot:'-20deg', delay:'0.9s' },
   { color:'#FFD000', top:'35%', right:'10%', w:16, rot:'50deg',  delay:'0.6s' },
-];
-
-// Fun floating object stickers (sticker-tape / washi-tape style)
-const STICKER_OBJECTS = [
-  { emoji: '🐶', label: 'Dog', top: '5%',  right: '5%',  bg: '#FFF3E0', border: '#FFB74D', rotate: '8deg',  delay: '0.2s', width: '64px' },
-  { emoji: '🍋', label: 'Lemon', top: '60%', left: '38%',  bg: '#FFFDE7', border: '#FFD600', rotate: '-6deg', delay: '0.6s', width: '58px' },
-  { emoji: '💕', label: 'Heart', top: '78%', left: '26%',  bg: '#FCE4EC', border: '#F48FB1', rotate: '4deg',  delay: '1s',   width: '54px' },
 ];
 
 export default function HeroSection() {
@@ -66,27 +59,13 @@ export default function HeroSection() {
         }} />
       ))}
 
-      {/* Fun floating sticker-tape objects */}
-      {STICKER_OBJECTS.map((s, i) => (
-        <div key={i} className="hero-sticker-obj" style={{
-          top: s.top, left: s.left, right: s.right,
-          background: s.bg,
-          border: `2px solid ${s.border}`,
-          transform: `rotate(${s.rotate})`,
-          animationDelay: s.delay,
-          width: s.width,
-        }}>
-          <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>{s.emoji}</span>
-        </div>
-      ))}
-
       {/* Main content */}
       <div className="container hero-content">
         {/* Location tag */}
         <div className="hero-tag animate-fade-in-up">
           <span>🌴</span>
           <span>Cancún, México</span>
-          <span>🛒</span>
+          <span>🌊</span>
         </div>
 
         {/* Headline */}
@@ -164,20 +143,6 @@ export default function HeroSection() {
           pointer-events: none;
           opacity: 0.75;
           animation: heroFloat 4s ease-in-out infinite alternate;
-        }
-
-        /* Sticker-tape floating objects */
-        .hero-sticker-obj {
-          position: absolute;
-          z-index: 2;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: none;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.13);
-          animation: heroFloat 3.5s ease-in-out infinite alternate;
-          padding: 8px;
         }
 
         /* Content */

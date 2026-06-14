@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, MessageCircle, Tag, Repeat, Truck, MapPin, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { STATUSES, PRODUCT_TYPES, CATEGORIES, getMessengerLink } from '../data/store';
+import { X, Tag, Repeat, Truck, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
+import { STATUSES, PRODUCT_TYPES, CATEGORIES } from '../data/store';
+import CheckoutModal from './CheckoutModal';
 
 const PLACEHOLDER_COLORS = {
   hogar:      { bg: '#FFF3E0', emoji: '🏠' },
@@ -81,6 +82,7 @@ function ImageGallery({ images, placeholder }) {
 
 export default function ProductModal({ product, onClose }) {
   if (!product) return null;
+  const [showCheckout, setShowCheckout] = useState(false);
 
   const isSold   = product.status === STATUSES.SOLD;
   const isOneOff = product.type   === PRODUCT_TYPES.ONE_OFF;
@@ -186,28 +188,23 @@ export default function ProductModal({ product, onClose }) {
           </div>
 
           {/* CTA */}
-          {!isSold ? (
-            <a
-              href={getMessengerLink(product.name)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="messenger-btn"
+          {!isSold && (
+            <button
+              id="pmodal-order-btn"
+              className="btn btn-teal"
+              style={{ width: '100%', justifyContent: 'center', padding: '14px 20px', fontSize: '1rem' }}
+              onClick={() => setShowCheckout(true)}
             >
-              <MessageCircle size={22} />
-              Preguntar por este producto
-            </a>
-          ) : (
-            <div className="pmodal-sold-msg">
-              <span>😔 Este producto ya fue vendido</span>
-              <a href={getMessengerLink('algo similar a ' + product.name)} target="_blank" rel="noopener noreferrer"
-                className="btn btn-outline" style={{ marginTop:8, width:'100%', justifyContent:'center' }}>
-                <MessageCircle size={16} />
-                ¿Tienes algo similar?
-              </a>
-            </div>
+              <ShoppingBag size={20} />
+              Pedir este producto
+            </button>
           )}
         </div>
       </div>
+
+      {showCheckout && (
+        <CheckoutModal product={product} onClose={() => setShowCheckout(false)} />
+      )}
 
       <style>{`
         .pmodal {
