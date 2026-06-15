@@ -98,7 +98,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         @media (max-width: 480px) {
           .hide-mobile { display: none; }
         }
-      `})]})}var K=[{emoji:`📦`,style:`card`,top:`6%`,left:`2%`,size:`2.4rem`,rotate:`-14deg`,delay:`0s`,dur:`3.6s`},{emoji:`👍`,style:`circle`,top:`38%`,left:`2%`,size:`2.2rem`,rotate:`0deg`,delay:`0.5s`,dur:`4.2s`,circleColor:`#1A7A6D`},{emoji:`🎧`,style:`card`,top:`68%`,left:`3%`,size:`2.3rem`,rotate:`10deg`,delay:`0.3s`,dur:`3.9s`},{emoji:`🌮`,style:`card`,top:`82%`,left:`18%`,size:`2rem`,rotate:`-6deg`,delay:`0.9s`,dur:`3.4s`},{emoji:`📱`,style:`circle`,top:`8%`,right:`3%`,size:`2.2rem`,rotate:`0deg`,delay:`0.2s`,dur:`4s`,circleColor:`#1A7A6D`},{emoji:`🛒`,style:`card`,top:`34%`,right:`2%`,size:`2.5rem`,rotate:`8deg`,delay:`0.7s`,dur:`3.7s`},{emoji:`🍎`,style:`card`,top:`65%`,right:`4%`,size:`2rem`,rotate:`-10deg`,delay:`0.4s`,dur:`4.4s`},{emoji:`👗`,style:`card`,top:`80%`,right:`18%`,size:`2rem`,rotate:`6deg`,delay:`1.1s`,dur:`3.2s`}],q=[{text:`SALE`,top:`5%`,right:`22%`,bg:`#E84B09`,rotate:`12deg`,delay:`0.3s`,shape:`oval`},{text:`20% OFF`,top:`70%`,left:`20%`,bg:`#E84B09`,rotate:`-8deg`,delay:`0.8s`,shape:`starburst`},{text:`NUEVO`,top:`15%`,left:`22%`,bg:`#1A7A6D`,rotate:`-6deg`,delay:`0.6s`,shape:`oval`}],J=[{color:`#1A7A6D`,top:`10%`,left:`34%`,w:26,h:7,rot:`-30deg`,delay:`0.2s`},{color:`#E84B09`,top:`88%`,left:`40%`,w:20,h:6,rot:`22deg`,delay:`0.5s`},{color:`#FFD000`,top:`22%`,right:`30%`,w:16,h:6,rot:`-45deg`,delay:`0.8s`},{color:`#1A7A6D`,top:`74%`,right:`28%`,w:22,h:6,rot:`35deg`,delay:`0.3s`},{color:`#E84B09`,top:`48%`,left:`8%`,w:18,h:5,rot:`-18deg`,delay:`0.9s`},{color:`#FFD000`,top:`40%`,right:`8%`,w:14,h:5,rot:`48deg`,delay:`0.6s`},{color:`#1A7A6D`,top:`55%`,left:`26%`,w:12,h:5,rot:`-38deg`,delay:`1s`},{color:`#E84B09`,top:`30%`,right:`24%`,w:10,h:5,rot:`60deg`,delay:`0.4s`}];function Y(){return(0,G.jsxs)(`section`,{className:`hero`,children:[(0,G.jsx)(`div`,{className:`hero-blob blob-1`}),(0,G.jsx)(`div`,{className:`hero-blob blob-2`}),(0,G.jsx)(`div`,{className:`hero-blob blob-3`}),K.map((e,t)=>(0,G.jsx)(`div`,{className:`hero-sticker hero-sticker-${e.style}`,style:{top:e.top,left:e.left,right:e.right,fontSize:e.size,"--rotate":e.rotate,animationDelay:e.delay,animationDuration:e.dur,...e.circleColor?{background:e.circleColor}:{}},children:e.emoji},t)),q.map((e,t)=>(0,G.jsx)(`div`,{className:`hero-badge hero-badge-${e.shape}`,style:{top:e.top,left:e.left,right:e.right,background:e.bg,"--rotate":e.rotate,animationDelay:e.delay},children:e.text},t)),J.map((e,t)=>(0,G.jsx)(`div`,{className:`hero-dash`,style:{top:e.top,left:e.left,right:e.right,width:e.w,height:e.h,background:e.color,transform:`rotate(${e.rot})`,animationDelay:e.delay}},t)),(0,G.jsxs)(`div`,{className:`container hero-content`,children:[(0,G.jsxs)(`div`,{className:`hero-tag animate-fade-in-up`,children:[(0,G.jsx)(`span`,{children:`🌴`}),(0,G.jsx)(`span`,{children:`Cancún, México`}),(0,G.jsx)(`span`,{children:`🌊`})]}),(0,G.jsxs)(`h1`,{className:`hero-title animate-fade-in-up delay-1`,children:[(0,G.jsx)(`span`,{className:`title-teal`,children:`Finds útiles`}),(0,G.jsx)(`br`,{}),(0,G.jsx)(`span`,{className:`title-orange`,children:`para tu día a día`}),(0,G.jsx)(`br`,{}),(0,G.jsx)(`span`,{className:`title-sub`,children:`en Cancún`})]}),(0,G.jsx)(`p`,{className:`hero-sub animate-fade-in-up delay-2`,children:`Productos reales · Precios locales · Entrega rápida`}),(0,G.jsxs)(`div`,{className:`hero-pills animate-fade-in-up delay-3`,children:[(0,G.jsxs)(`div`,{className:`hero-pill`,children:[(0,G.jsx)(wr,{size:14}),(0,G.jsx)(`span`,{children:`Región 96`})]}),(0,G.jsxs)(`div`,{className:`hero-pill`,children:[(0,G.jsx)(Hr,{size:14}),(0,G.jsx)(`span`,{children:`Entrega desde $50`})]}),(0,G.jsxs)(`div`,{className:`hero-pill`,children:[(0,G.jsx)(Ir,{size:14}),(0,G.jsx)(`span`,{children:`Cientos de productos`})]})]})]}),(0,G.jsx)(`style`,{children:`
+      `})]})}var K=[{emoji:`📦`,style:`card`,top:`6%`,left:`2%`,mTop:`4%`,mLeft:`4%`,size:`2.4rem`,rotate:`-14deg`,delay:`0s`,dur:`3.6s`},{emoji:`👍`,style:`circle`,top:`38%`,left:`2%`,mTop:`32%`,mLeft:`3%`,size:`2.2rem`,rotate:`0deg`,delay:`0.5s`,dur:`4.2s`,circleColor:`#1A7A6D`},{emoji:`🎧`,style:`card`,top:`68%`,left:`3%`,mTop:`65%`,mLeft:`2%`,size:`2.3rem`,rotate:`10deg`,delay:`0.3s`,dur:`3.9s`},{emoji:`🌮`,style:`card`,top:`82%`,left:`18%`,mTop:`85%`,mLeft:`15%`,size:`2rem`,rotate:`-6deg`,delay:`0.9s`,dur:`3.4s`},{emoji:`📱`,style:`circle`,top:`8%`,right:`3%`,mTop:`6%`,mRight:`4%`,size:`2.2rem`,rotate:`0deg`,delay:`0.2s`,dur:`4s`,circleColor:`#1A7A6D`},{emoji:`🛒`,style:`card`,top:`34%`,right:`2%`,mTop:`28%`,mRight:`2%`,size:`2.5rem`,rotate:`8deg`,delay:`0.7s`,dur:`3.7s`},{emoji:`🍎`,style:`card`,top:`65%`,right:`4%`,mTop:`58%`,mRight:`4%`,size:`2rem`,rotate:`-10deg`,delay:`0.4s`,dur:`4.4s`},{emoji:`👗`,style:`card`,top:`80%`,right:`18%`,mTop:`82%`,mRight:`12%`,size:`2rem`,rotate:`6deg`,delay:`1.1s`,dur:`3.2s`}],q=[{text:`SALE`,top:`5%`,right:`22%`,mTop:`3%`,mRight:`26%`,bg:`#E84B09`,rotate:`12deg`,delay:`0.3s`,shape:`oval`},{text:`20% OFF`,top:`70%`,left:`20%`,mTop:`74%`,mLeft:`18%`,bg:`#E84B09`,rotate:`-8deg`,delay:`0.8s`,shape:`starburst`},{text:`NUEVO`,top:`15%`,left:`22%`,mTop:`12%`,mLeft:`24%`,bg:`#1A7A6D`,rotate:`-6deg`,delay:`0.6s`,shape:`oval`}],J=[{color:`#1A7A6D`,top:`10%`,left:`34%`,mTop:`8%`,mLeft:`38%`,w:26,h:7,rot:`-30deg`,delay:`0.2s`},{color:`#E84B09`,top:`88%`,left:`40%`,mTop:`92%`,mLeft:`45%`,w:20,h:6,rot:`22deg`,delay:`0.5s`},{color:`#FFD000`,top:`22%`,right:`30%`,mTop:`20%`,mRight:`35%`,w:16,h:6,rot:`-45deg`,delay:`0.8s`},{color:`#1A7A6D`,top:`74%`,right:`28%`,mTop:`78%`,mRight:`32%`,w:22,h:6,rot:`35deg`,delay:`0.3s`},{color:`#E84B09`,top:`48%`,left:`8%`,mTop:`45%`,mLeft:`12%`,w:18,h:5,rot:`-18deg`,delay:`0.9s`},{color:`#FFD000`,top:`40%`,right:`8%`,mTop:`36%`,mRight:`14%`,w:14,h:5,rot:`48deg`,delay:`0.6s`},{color:`#1A7A6D`,top:`55%`,left:`26%`,mTop:`52%`,mLeft:`28%`,w:12,h:5,rot:`-38deg`,delay:`1s`},{color:`#E84B09`,top:`30%`,right:`24%`,mTop:`25%`,mRight:`20%`,w:10,h:5,rot:`60deg`,delay:`0.4s`}];function Y(){return(0,G.jsxs)(`section`,{className:`hero`,children:[(0,G.jsx)(`div`,{className:`hero-blob blob-1`}),(0,G.jsx)(`div`,{className:`hero-blob blob-2`}),(0,G.jsx)(`div`,{className:`hero-blob blob-3`}),K.map((e,t)=>(0,G.jsx)(`div`,{className:`hero-sticker hero-sticker-${e.style}`,style:{"--top":e.top,"--left":e.left,"--right":e.right,"--m-top":e.mTop,"--m-left":e.mLeft,"--m-right":e.mRight,fontSize:e.size,"--rotate":e.rotate,animationDelay:e.delay,animationDuration:e.dur,...e.circleColor?{background:e.circleColor}:{}},children:e.emoji},t)),q.map((e,t)=>(0,G.jsx)(`div`,{className:`hero-badge hero-badge-${e.shape}`,style:{"--top":e.top,"--left":e.left,"--right":e.right,"--m-top":e.mTop,"--m-left":e.mLeft,"--m-right":e.mRight,background:e.bg,"--rotate":e.rotate,animationDelay:e.delay},children:e.text},t)),J.map((e,t)=>(0,G.jsx)(`div`,{className:`hero-dash`,style:{"--top":e.top,"--left":e.left,"--right":e.right,"--m-top":e.mTop,"--m-left":e.mLeft,"--m-right":e.mRight,width:e.w,height:e.h,background:e.color,transform:`rotate(${e.rot})`,animationDelay:e.delay}},t)),(0,G.jsxs)(`div`,{className:`container hero-content`,children:[(0,G.jsxs)(`div`,{className:`hero-tag animate-fade-in-up`,children:[(0,G.jsx)(`span`,{children:`🌴`}),(0,G.jsx)(`span`,{children:`Cancún, México`}),(0,G.jsx)(`span`,{children:`🌊`})]}),(0,G.jsxs)(`h1`,{className:`hero-title animate-fade-in-up delay-1`,children:[(0,G.jsx)(`span`,{className:`title-teal`,children:`Finds útiles`}),(0,G.jsx)(`br`,{}),(0,G.jsx)(`span`,{className:`title-orange`,children:`para tu día a día`}),(0,G.jsx)(`br`,{}),(0,G.jsx)(`span`,{className:`title-sub`,children:`en Cancún`})]}),(0,G.jsx)(`p`,{className:`hero-sub animate-fade-in-up delay-2`,children:`Productos reales · Precios locales · Entrega rápida`}),(0,G.jsxs)(`div`,{className:`hero-pills animate-fade-in-up delay-3`,children:[(0,G.jsxs)(`div`,{className:`hero-pill`,children:[(0,G.jsx)(wr,{size:14}),(0,G.jsx)(`span`,{children:`Región 96`})]}),(0,G.jsxs)(`div`,{className:`hero-pill`,children:[(0,G.jsx)(Hr,{size:14}),(0,G.jsx)(`span`,{children:`Entrega desde $50`})]}),(0,G.jsxs)(`div`,{className:`hero-pill`,children:[(0,G.jsx)(Ir,{size:14}),(0,G.jsx)(`span`,{children:`Cientos de productos`})]})]})]}),(0,G.jsx)(`style`,{children:`
         /* ── Shell ── */
         .hero {
           position: relative;
@@ -124,6 +124,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         /* ── Base sticker ── */
         .hero-sticker {
           position: absolute;
+          top: var(--top); left: var(--left); right: var(--right);
           z-index: 2;
           user-select: none;
           pointer-events: none;
@@ -156,6 +157,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         /* ── Badge stickers ── */
         .hero-badge {
           position: absolute; z-index: 3;
+          top: var(--top); left: var(--left); right: var(--right);
           font-family: var(--font-display);
           font-weight: 900; color: #fff;
           font-size: 0.72rem; letter-spacing: 0.06em;
@@ -189,6 +191,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         /* ── Dashes ── */
         .hero-dash {
           position: absolute; z-index: 1;
+          top: var(--top); left: var(--left); right: var(--right);
           border-radius: 999px;
           pointer-events: none; opacity: 0.8;
           animation: heroFloat 4.2s ease-in-out infinite alternate;
@@ -237,14 +240,19 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
         /* ── Mobile ── */
         @media (max-width: 640px) {
-          .hero { padding: 52px 0 44px; min-height: auto; }
-          /* Keep only 4 stickers on mobile */
-          .hero-sticker:nth-child(n+7) { display: none; }
-          .hero-badge:nth-child(n+2)   { display: none; }
-          .hero-dash:nth-child(n+5)    { display: none; }
+          .hero { padding: 48px 0 44px; min-height: auto; }
           .hero-title { font-size: 2.1rem; }
           .hero-sub   { font-size: 0.95rem; }
-          .hero-sticker-circle { width: 46px; height: 46px; }
+          
+          /* Cluster everything closer and scale it down */
+          .hero-sticker, .hero-badge, .hero-dash {
+            top: var(--m-top, var(--top)) !important;
+            left: var(--m-left, var(--left)) !important;
+            right: var(--m-right, var(--right)) !important;
+            transform-origin: center;
+            transform: scale(0.65) rotate(var(--rotate, 0deg)) !important;
+            animation: none !important; /* Disable float on mobile to avoid transform override issues */
+          }
         }
       `})]})}function X({active:e,onChange:t}){return(0,G.jsxs)(`div`,{className:`cat-wrapper`,children:[(0,G.jsx)(`div`,{className:`cat-scroll`,children:ul.map(n=>(0,G.jsxs)(`button`,{className:`chip ${e===n.id?`chip-active`:`chip-default`}`,onClick:()=>t(n.id),children:[(0,G.jsx)(`span`,{children:n.emoji}),(0,G.jsx)(`span`,{children:n.label})]},n.id))}),(0,G.jsx)(`style`,{children:`
         .cat-wrapper {
