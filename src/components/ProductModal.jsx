@@ -36,13 +36,14 @@ function ImageGallery({ images, placeholder }) {
 
       {hasMultiple && (
         <>
-          <button className="pmg-arrow pmg-left"  onClick={prev}><ChevronLeft  size={20} /></button>
-          <button className="pmg-arrow pmg-right" onClick={next}><ChevronRight size={20} /></button>
+          <button className="pmg-arrow pmg-left" aria-label="Foto anterior" onClick={prev}><ChevronLeft  size={20} /></button>
+          <button className="pmg-arrow pmg-right" aria-label="Siguiente foto" onClick={next}><ChevronRight size={20} /></button>
           {/* Dots */}
           <div className="pmg-dots">
             {images.map((_, i) => (
               <button
                 key={i}
+                aria-label={`Ir a la foto ${i + 1}`}
                 className={`pmg-dot ${i === idx ? 'pmg-dot-active' : ''}`}
                 onClick={e => { e.stopPropagation(); setIdx(i); }}
               />
@@ -98,7 +99,7 @@ export default function ProductModal({ product, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box pmodal" onClick={e => e.stopPropagation()}>
         {/* Close */}
-        <button className="pmodal-close" onClick={onClose}>
+        <button className="pmodal-close" aria-label="Cerrar detalles del producto" onClick={onClose}>
           <X size={20} />
         </button>
 
@@ -211,9 +212,10 @@ export default function ProductModal({ product, onClose }) {
           width: 100%; max-width: 480px;
           max-height: 92vh; overflow-y: auto;
           position: relative;
+          padding-bottom: env(safe-area-inset-bottom);
         }
         .pmodal-close {
-          position: absolute; top: 14px; right: 14px; z-index: 10;
+          position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px; z-index: 10;
           width: 36px; height: 36px;
           background: rgba(255,255,255,0.9); border-radius: var(--radius-full);
           display: flex; align-items: center; justify-content: center;

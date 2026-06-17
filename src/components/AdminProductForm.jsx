@@ -13,26 +13,28 @@ const EMPTY = {
   variants: [], delivery_enabled: true,
 };
 
-// Compress & resize image to base64 via canvas
-function compressImage(file, maxW = 900, quality = 0.80) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxW) { height = Math.round(height * maxW / width); width = maxW; }
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
+import imageCompression from 'browser-image-compression';
+
+// Compress & resize image to base64 via browser-image-compression
+async function compressImage(file) {
+  try {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1000,
+      useWebWorker: true,
+      fileType: 'image/webp', // WebP yields much smaller base64 strings
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+    const compressedBlob = await imageCompression(file, options);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(compressedBlob);
+    });
+  } catch (err) {
+    console.error('Image compression failed', err);
+    throw err;
+  }
 }
 
 export default function AdminProductForm({ product, onSave, onClose }) {
@@ -333,6 +335,23 @@ export default function AdminProductForm({ product, onSave, onClose }) {
 
           {/* ── Actions ── */}
           <div className="apf-actions">
+            {product && (
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ marginRight: 'auto', gap: '6px', color: 'var(--teal)', borderColor: 'var(--teal)' }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigator.clipboard.writeText(`${window.location.origin}/p/${product.id}`);
+                  const btn = e.currentTarget;
+                  const original = btn.innerHTML;
+                  btn.innerHTML = '¡Copiado!';
+                  setTimeout(() => btn.innerHTML = original, 2000);
+                }}
+              >
+                🔗 Copiar Link
+              </button>
+            )}
             <button type="button" className="btn btn-outline" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" className="btn btn-teal" disabled={saving}>
               {saving ? 'Guardando...' : (product ? 'Guardar cambios' : 'Agregar producto')}

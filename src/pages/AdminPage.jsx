@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, LogOut, Eye, Package, TrendingUp, ClipboardList, AlertTriangle, DollarSign } from 'lucide-react';
+import { Plus, LogOut, Eye, Package, TrendingUp, ClipboardList, AlertTriangle, DollarSign, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LoginGate     from '../components/LoginGate';
 import StatsBar      from '../components/StatsBar';
@@ -9,6 +9,7 @@ import SaleModal     from '../components/SaleModal';
 import InsightsPanel from '../components/InsightsPanel';
 import SalesLog      from '../components/SalesLog';
 import FinancePanel  from '../components/FinancePanel';
+import IntegrationsPanel from '../components/IntegrationsPanel';
 import {
   getProducts, addProduct, updateProduct, deleteProduct,
   recordSale, getStats, STATUSES, PRODUCT_TYPES,
@@ -43,6 +44,7 @@ const TABS = [
   { id: 'sales',     label: 'Ventas',     icon: <ClipboardList size={17} /> },
   { id: 'insights',  label: 'Insights',   icon: <TrendingUp size={17} /> },
   { id: 'finance',   label: 'Finanzas',   icon: <DollarSign size={17} /> },
+  { id: 'integrations', label: 'Integraciones', icon: <Globe size={17} /> },
 ];
 
 export default function AdminPage() {
@@ -129,14 +131,10 @@ export default function AdminPage() {
           {/* Row 1: logo + actions */}
           <div className="admin-header-row1">
             <div className="admin-logo">
-              <div className="logo-icon" style={{ width:36,height:36,fontSize:'1.1rem' }}>☀️</div>
-              <div>
-                <div style={{ display:'flex',gap:4 }}>
-                  <span className="logo-bazarito" style={{ fontSize:'0.9rem' }}>Bazarito</span>
-                  <span className="logo-cancun"   style={{ fontSize:'0.9rem' }}>Cancún</span>
-                </div>
-                <span style={{ fontSize:'0.65rem',color:'var(--text-muted)',fontWeight:700,letterSpacing:'0.07em',textTransform:'uppercase' }}>
-                  Panel Admin
+              <img src="/Logo.png" alt="Bazarito Cancún" style={{ height: 42 }} />
+              <div style={{ marginLeft: 8, display: 'flex', alignItems: 'center' }}>
+                <span style={{ fontSize:'0.7rem',color:'var(--teal)',fontWeight:800,letterSpacing:'0.07em',textTransform:'uppercase' }}>
+                  Admin
                 </span>
               </div>
             </div>
@@ -226,6 +224,18 @@ export default function AdminPage() {
         {tab === 'finance' && (
           <div className="animate-fade-in">
             <FinancePanel />
+          </div>
+        )}
+
+        {tab === 'integrations' && (
+          <div className="animate-fade-in">
+            <div className="admin-section-header">
+              <div>
+                <h2>Integraciones</h2>
+                <p>Gestiona la conexión con Facebook, Instagram y TikTok Shop</p>
+              </div>
+            </div>
+            <IntegrationsPanel />
           </div>
         )}
       </main>

@@ -96,7 +96,7 @@ export default function SaleModal({ product, onConfirm, onClose }) {
             <h3>Registrar Venta</h3>
             <p className="sale-product-name">{product.name}</p>
           </div>
-          <button className="btn btn-icon" onClick={onClose} style={{ color:'var(--text-muted)', marginLeft:'auto' }}>
+          <button className="btn btn-icon" aria-label="Cerrar modal de venta" onClick={onClose} style={{ color:'var(--text-muted)', marginLeft:'auto' }}>
             <X size={20} />
           </button>
         </div>

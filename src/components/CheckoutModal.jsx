@@ -102,15 +102,16 @@ export default function CheckoutModal({ product, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box co-modal" onClick={e => e.stopPropagation()}>
-
+      <div className="modal-box co-modal" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="co-header">
           <div>
-            <p className="co-header-label">Pedir producto</p>
-            <h3 className="co-header-title">{product.name}</h3>
+            <p className="co-header-label">{product.name}</p>
+            <h3 className="co-header-title">Finalizar compra</h3>
           </div>
-          <button className="co-close" onClick={onClose}><X size={20} /></button>
+          <button className="co-close" aria-label="Cerrar modal de pago" onClick={onClose}>
+            <X size={20} />
+          </button>
         </div>
 
         {/* ── STEP 1: Client Info ── */}
@@ -242,7 +243,7 @@ export default function CheckoutModal({ product, onClose }) {
                 // Build a pre-filled WhatsApp message to business
                 const BAZARITO_WA = '529543388332';
                 const msg = encodeURIComponent(
-                  `🛍️ ¡Hola! Quiero recoger el producto:\n"${product.name}" ($${product.price.toLocaleString('es-MX')} MXN)\n\n👤 Nombre: ${name.trim()}\n📱 Teléfono: ${phone.trim()}\n⏰ Hora de recogida: ${pickupTime}\n\nPor favor confirmame la dirección exacta. ¡Gracias!`
+                  `🛒 ¡Hola Bazarito! Quiero apartar el producto:\n"${product.name}" ($${product.price.toLocaleString('es-MX')} MXN)\n\n👤 Nombre: ${name.trim()}\n📱 Teléfono: ${phone.trim()}\n⏰ Hora de recogida: ${pickupTime}\n\n¿Me puedes confirmar la dirección exacta? ¡Gracias!`
                 );
                 window.open(`https://wa.me/${BAZARITO_WA}?text=${msg}`, '_blank');
                 onClose();
@@ -281,12 +282,12 @@ export default function CheckoutModal({ product, onClose }) {
                 <div className="co-pay-card-header">
                   <ShieldCheck size={20} className="co-pay-icon-green" />
                   <div>
-                    <p className="co-pay-card-title">Anticipo de envío — ${deliveryFee} MXN</p>
+                    <p className="co-pay-card-title">Reserva tu envío — ${deliveryFee} MXN</p>
                     <p className="co-pay-card-sub">Paga ahora solo el costo de envío por Mercado Pago</p>
                   </div>
                 </div>
                 <div className="co-pay-terms">
-                  💵 El precio del producto (<strong>${product.price.toLocaleString('es-MX')} MXN</strong>) se paga <strong>en efectivo cuando llegue a tu puerta. Sin excepciones.</strong>
+                  ✅ <strong>Paga el resto en efectivo</strong> de forma segura, directo a tu repartidor al recibir tu pedido (${product.price.toLocaleString('es-MX')} MXN).
                 </div>
                 <button
                   id="co-pay-deposit-btn"

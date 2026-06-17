@@ -136,7 +136,8 @@ export async function updateProduct(id, updates) {
   if (updates.images !== undefined) payload.images = updates.images;
   // Merge custom_attributes so ui_type, variants, and delivery_enabled all survive
   if (updates.type !== undefined || updates.variants !== undefined || updates.delivery_enabled !== undefined) {
-    const { data: existing } = await supabase.from('products').select('custom_attributes').eq('id', id).single();
+    const { data: existing, error: existingErr } = await supabase.from('products').select('custom_attributes').eq('id', id).single();
+    if (existingErr) throw existingErr;
     const prev = existing?.custom_attributes || {};
     payload.custom_attributes = {
       ...prev,
@@ -231,16 +232,27 @@ export async function recordSale({
   const delivFee  = deliveryFee && deliveryFeeAmount ? Number(deliveryFeeAmount) : 0;
   const orderTotal = (unitPrice * quantity) + delivFee;
 
+  // Normalize pay_method for DB enum constraint ('cash', 'mercadopago', etc.)
+  let dbPayMethod = payMethod || 'cash';
+  let payMethodNote = '';
+  if (dbPayMethod === 'cash_pickup') {
+    dbPayMethod = 'cash';
+    payMethodNote = 'Pago: Efectivo en recolección';
+  } else if (dbPayMethod === 'cash_delivery') {
+    dbPayMethod = 'cash';
+    payMethodNote = 'Pago: Efectivo a contraentrega';
+  }
+
   // Build composite notes with client info
   const clientMeta = [clientName, clientPhone, clientEmail].filter(Boolean).join(' | ');
-  const fullNotes  = [notes, clientMeta ? `Cliente: ${clientMeta}` : ''].filter(Boolean).join(' · ');
+  const fullNotes  = [notes, payMethodNote, clientMeta ? `Cliente: ${clientMeta}` : ''].filter(Boolean).join(' · ');
 
   // 2. Create Order — override created_at with admin-provided saleDate
   const orderPayload = {
     business_id: bizId,
     total: orderTotal,
     source: delivery,
-    pay_method: payMethod || 'cash',
+    pay_method: dbPayMethod,
     ...(fullNotes ? { notes: fullNotes } : {}),
   };
   // If saleDate differs from today, set created_at explicitly
@@ -249,16 +261,18 @@ export async function recordSale({
     orderPayload.created_at = new Date(saleDate + 'T12:00:00').toISOString();
   }
 
-  const { data: order } = await supabase.from('orders').insert([orderPayload]).select().single();
+  const { data: order, error: orderErr } = await supabase.from('orders').insert([orderPayload]).select().single();
+  if (orderErr) throw new Error(orderErr.message || "Error al crear la orden");
 
   // 3. Create Order Item with exact unit_price entered
-  const { data: orderItem } = await supabase.from('order_items').insert([{
+  const { data: orderItem, error: itemErr } = await supabase.from('order_items').insert([{
     order_id: order.id,
     product_id: prod.id,
     quantity: quantity,
     unit_price: unitPrice,
     unit_cost: prod.cost
   }]).select().single();
+  if (itemErr) throw new Error(itemErr.message || "Error al agregar el item a la orden");
 
   // 4. Update Inventory / Status
   const isOneOff = prod.custom_attributes?.ui_type === PRODUCT_TYPES.ONE_OFF;

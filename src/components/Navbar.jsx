@@ -8,13 +8,7 @@ export default function Navbar() {
       <div className="container navbar-inner">
         {/* Logo */}
         <a href="/" className="navbar-logo">
-          <div className="logo-icon">
-            <span>☀️</span>
-          </div>
-          <div className="logo-text">
-            <span className="logo-bazarito">Bazarito</span>
-            <span className="logo-cancun">Cancún</span>
-          </div>
+          <img src="/Logo.png" alt="Bazarito Cancún" style={{ height: 44 }} />
         </a>
 
         {/* Actions */}
@@ -41,6 +35,7 @@ export default function Navbar() {
           -webkit-backdrop-filter: blur(12px);
           border-bottom: 1.5px solid var(--border);
           box-shadow: 0 2px 12px rgba(26,18,8,0.06);
+          padding-top: env(safe-area-inset-top);
         }
         .navbar-inner {
           display: flex;

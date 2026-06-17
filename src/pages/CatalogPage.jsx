@@ -54,14 +54,28 @@ export default function CatalogPage() {
 
       {/* Footer */}
       <footer className="catalog-footer">
-        <div className="container" style={{ textAlign:'center', padding:'24px 20px' }}>
-          <div style={{ fontSize:'1.5rem', marginBottom:4 }}>☀️🌴</div>
-          <p style={{ fontFamily:'var(--font-display)', fontWeight:700, color:'var(--teal)', fontSize:'1rem' }}>
-            Bazarito Cancún
+        <div className="container" style={{ textAlign:'center', paddingTop: 32, paddingLeft: 20, paddingRight: 20, paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
+          <img 
+            src="/Logo.png" 
+            alt="Bazarito Cancún" 
+            style={{ height: 50, display: 'block', margin: '0 auto 12px auto' }} 
+          />
+          <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)', fontWeight: 600, marginBottom: 4 }}>
+            © 2026 Bazarito Cancun. Todos los derechos reservados
           </p>
-          <p style={{ fontSize:'0.82rem', color:'var(--text-muted)', marginTop:4 }}>
-            Productos reales · Precios locales · Entregas seguras · Región 96, Cancún
+          <p style={{ fontSize:'0.82rem', color:'var(--text-muted)' }}>
+            Productos reales · Entregas seguras · Región 96, Cancún, México
           </p>
+          <div style={{ marginTop: 24 }}>
+            <a 
+              href="#" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ fontSize: '0.75rem', color: 'var(--teal)', textDecoration: 'none', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', opacity: 0.8 }}
+            >
+              ⚡ Powered by Jonla Agencia
+            </a>
+          </div>
         </div>
       </footer>
 
