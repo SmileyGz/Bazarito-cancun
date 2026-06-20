@@ -1,3 +1,8 @@
+---
+name: mercadopago_integration
+description: Mercado Pago Checkout Pro Integration (React + Supabase)
+---
+
 # Skill: Mercado Pago Checkout Pro Integration (React + Supabase)
 
 ## Description
