@@ -131,7 +131,7 @@ export default function AdminPage() {
           {/* Row 1: logo + actions */}
           <div className="admin-header-row1">
             <div className="admin-logo">
-              <img src="/Logo.png" alt="Bazarito Cancún" style={{ height: 42 }} />
+              <img src={`${import.meta.env.BASE_URL}Logo.png`} alt="Bazarito Cancún" style={{ height: 42 }} />
               <div style={{ marginLeft: 8, display: 'flex', alignItems: 'center' }}>
                 <span style={{ fontSize:'0.7rem',color:'var(--teal)',fontWeight:800,letterSpacing:'0.07em',textTransform:'uppercase' }}>
                   Admin

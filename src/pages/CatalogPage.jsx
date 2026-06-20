@@ -56,7 +56,7 @@ export default function CatalogPage() {
       <footer className="catalog-footer">
         <div className="container" style={{ textAlign:'center', paddingTop: 32, paddingLeft: 20, paddingRight: 20, paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
           <img 
-            src="/Logo.png" 
+            src={`${import.meta.env.BASE_URL}Logo.png`}
             alt="Bazarito Cancún" 
             style={{ height: 50, display: 'block', margin: '0 auto 12px auto' }} 
           />

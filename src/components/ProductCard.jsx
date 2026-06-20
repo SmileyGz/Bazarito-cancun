@@ -42,7 +42,8 @@ export default function ProductCard({ product, onClick }) {
 
   async function handleShare(e) {
     e.stopPropagation();
-    const url = `${window.location.origin}/p/${product.id}`;
+    e.preventDefault(); // Prevent <Link> from navigating to the product page
+    const url = `${window.location.origin}${import.meta.env.BASE_URL}p/${product.id}`;
     if (navigator.share) {
       try {
         await navigator.share({

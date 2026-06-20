@@ -155,7 +155,7 @@ export default function ProductLandingPage() {
   }, [id]);
 
   async function handleShare() {
-    const url = `${window.location.origin}/p/${id}`;
+    const url = `${window.location.origin}${import.meta.env.BASE_URL}p/${id}`;
     if (navigator.share) {
       try {
         await navigator.share({

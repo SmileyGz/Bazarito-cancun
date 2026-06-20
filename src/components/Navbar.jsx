@@ -1,15 +1,16 @@
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { MESSENGER_URL } from '../data/store';
 
 export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="container navbar-inner">
-        {/* Logo */}
-        <a href="/" className="navbar-logo">
-          <img src="/Logo.png" alt="Bazarito Cancún" style={{ height: 44 }} />
-        </a>
+        {/* Logo — links to catalog root */}
+        <Link to="/" className="navbar-logo">
+          <img src={`${import.meta.env.BASE_URL}Logo.png`} alt="Bazarito Cancún" style={{ height: 44 }} />
+        </Link>
 
         {/* Actions */}
         <div className="navbar-actions">
