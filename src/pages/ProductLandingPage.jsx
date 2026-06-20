@@ -21,8 +21,16 @@ function ImageGallery({ images, placeholder }) {
   const [idx, setIdx] = useState(0);
   const hasMultiple = images.length > 1;
 
-  const prev = () => setIdx(i => (i - 1 + images.length) % images.length);
-  const next = () => setIdx(i => (i + 1) % images.length);
+  const prev = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIdx(i => (i - 1 + images.length) % images.length);
+  };
+  const next = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIdx(i => (i + 1) % images.length);
+  };
 
   if (images.length === 0) {
     return (
@@ -37,14 +45,19 @@ function ImageGallery({ images, placeholder }) {
       <img key={idx} src={images[idx]} alt={`Foto ${idx + 1}`} className="plp-gallery-img" />
       {hasMultiple && (
         <>
-          <button className="plp-arrow plp-left" onClick={prev} aria-label="Foto anterior"><ChevronLeft size={24} /></button>
-          <button className="plp-arrow plp-right" onClick={next} aria-label="Siguiente foto"><ChevronRight size={24} /></button>
+          <button type="button" className="plp-arrow plp-left" onClick={prev} aria-label="Foto anterior"><ChevronLeft size={24} /></button>
+          <button type="button" className="plp-arrow plp-right" onClick={next} aria-label="Siguiente foto"><ChevronRight size={24} /></button>
           <div className="plp-dots">
             {images.map((_, i) => (
               <button
                 key={i}
+                type="button"
                 className={`plp-dot ${i === idx ? 'plp-dot-active' : ''}`}
-                onClick={() => setIdx(i)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIdx(i);
+                }}
                 aria-label={`Ver foto ${i + 1}`}
               />
             ))}
@@ -67,9 +80,17 @@ export default function ProductLandingPage() {
   useEffect(() => {
     async function load() {
       try {
-        const { data } = await supabase.from('products').select('*').eq('id', id).single();
-        setProduct(data);
+        const { data } = await supabase.from('products').select('*, inventory(quantity)').eq('id', id).single();
         if (data) {
+          const mappedProduct = {
+            ...data,
+            category: data.category_id || 'hogar',
+            stock: data.inventory?.quantity != null ? data.inventory.quantity : null,
+            type: data.custom_attributes?.ui_type || (data.inventory ? 'stock' : 'one_off'),
+            variants: data.custom_attributes?.variants || [],
+            delivery_enabled: data.custom_attributes?.delivery_enabled !== false,
+          };
+          setProduct(mappedProduct);
           // Dynamic SEO Tags — include ☀️ brand emoji in title
           document.title = `${data.name} | Bazarito Cancún ☀️`;
           
@@ -351,12 +372,14 @@ export default function ProductLandingPage() {
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transition: all 0.2s ease;
+            z-index: 5;
           }
           .plp-arrow:hover { background: white; transform: translateY(-50%) scale(1.1); }
           .plp-left { left: 15px; } .plp-right { right: 15px; }
           .plp-dots {
             position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
             display: flex; gap: 8px;
+            z-index: 5;
           }
           .plp-dot {
             width: 8px; height: 8px; border-radius: 50%;
