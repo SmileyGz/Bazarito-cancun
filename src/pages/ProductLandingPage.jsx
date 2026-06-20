@@ -163,9 +163,43 @@ export default function ProductLandingPage() {
           text: `Mira este producto en Bazarito Cancún: ${product?.name}`,
           url,
         });
-      } catch {}
-    } else {
-      await navigator.clipboard.writeText(url);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.error('Error sharing:', err);
+      }
+    }
+
+    // Robust Clipboard Copy with textarea fallback (crucial for Messenger / In-app Webviews)
+    let copySuccess = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        copySuccess = true;
+      } catch (err) {
+        console.warn('navigator.clipboard failed, trying textarea fallback:', err);
+      }
+    }
+
+    if (!copySuccess) {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        copySuccess = document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } catch (err) {
+        console.error('Fallback copy failed:', err);
+      }
+    }
+
+    if (copySuccess) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

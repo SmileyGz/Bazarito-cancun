@@ -11,16 +11,23 @@ const ZONES = [
   { id: 'night',  label: 'Nocturno (>8 pm)',  fee: 100, icon: <Moon    size={16} /> },
 ];
 
-// ── Pickup time slots: 9am–6pm, every 15 min ────────────────────────────────
+// ── Pickup time slots: 9am–6pm, every 30 min ────────────────────────────────
 function buildPickupSlots() {
   const slots = [];
-  for (let h = 9; h < 18; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      const hh = String(h).padStart(2, '0');
+  for (let h = 9; h <= 18; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      if (h === 18 && m > 0) continue; // Don't go past 6:00 PM
       const mm = String(m).padStart(2, '0');
-      const suffix = h < 12 ? 'AM' : 'PM';
-      const h12 = h > 12 ? h - 12 : h;
-      slots.push({ value: `${hh}:${mm}`, label: `${h12}:${mm} ${suffix}` });
+      
+      let h12 = h;
+      let suffix = 'AM';
+      if (h >= 12) {
+        suffix = 'PM';
+        if (h > 12) h12 = h - 12;
+      }
+      
+      const label = `${h12}:${mm} ${suffix}`;
+      slots.push({ value: label, label });
     }
   }
   return slots;
@@ -216,18 +223,21 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
               Horario de atención: 9:00 AM – 6:00 PM
             </p>
 
-            <div className="co-time-grid">
-              {PICKUP_SLOTS.map(slot => (
-                <button
-                  key={slot.value}
-                  type="button"
-                  id={`co-time-${slot.value}`}
-                  className={`co-time-slot ${pickupTime === slot.value ? 'co-time-slot-active' : ''}`}
-                  onClick={() => setPickupTime(slot.value)}
-                >
-                  {slot.label}
-                </button>
-              ))}
+            <div className="co-select-wrapper">
+              <select
+                id="co-pickup-time-select"
+                className="co-select"
+                value={pickupTime}
+                onChange={(e) => setPickupTime(e.target.value)}
+                aria-label="Selecciona un horario de recogida"
+              >
+                <option value="">-- Elige un horario --</option>
+                {PICKUP_SLOTS.map(slot => (
+                  <option key={slot.value} value={slot.value}>
+                    {slot.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="co-info-box">
@@ -442,28 +452,47 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
           .co-zone-icon { color: var(--teal); display: flex; }
           .co-zone-label { flex: 1; }
           .co-zone-fee { font-family: var(--font-display); font-weight: 800; color: var(--teal-dark); }
-          /* Pickup time grid */
-          .co-time-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
+          /* Pickup time dropdown */
+          .co-select-wrapper {
+            position: relative;
+            width: 100%;
+            margin-top: 8px;
           }
-          .co-time-slot {
-            padding: 8px 4px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-md);
+          .co-select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1rem;
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--text-primary);
             background: var(--bg-card);
-            font-size: 0.78rem; font-weight: 600;
-            color: var(--text-secondary);
+            border: 2.5px solid var(--border);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all var(--dur-fast);
-            text-align: center;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
           }
-          .co-time-slot:hover { border-color: var(--teal); color: var(--teal); }
-          .co-time-slot-active {
-            border-color: var(--teal) !important;
-            background: #E8F4F3 !important;
-            color: var(--teal-dark) !important;
+          .co-select:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(26, 122, 109, 0.15);
+          }
+          .co-select-wrapper::after {
+            content: '';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid var(--text-secondary);
+            border-bottom: 2px solid var(--text-secondary);
+            pointer-events: none;
+            transform: translateY(-70%) rotate(45deg);
+            transition: border-color 0.2s ease;
+          }
+          .co-select-wrapper:focus-within::after {
+            border-color: var(--teal);
           }
           /* Recap bar */
           .co-recap {
@@ -524,9 +553,6 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
             transition: color var(--dur-fast);
           }
           .co-back-link:hover { color: var(--teal); }
-          @media (max-width: 380px) {
-            .co-time-grid { grid-template-columns: repeat(3, 1fr); }
-          }
         `}</style>
       </div>
     </div>

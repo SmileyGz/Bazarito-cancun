@@ -42,8 +42,9 @@ export default function ProductCard({ product, onClick }) {
 
   async function handleShare(e) {
     e.stopPropagation();
-    e.preventDefault(); // Prevent <Link> from navigating to the product page
+    e.preventDefault();
     const url = `${window.location.origin}${import.meta.env.BASE_URL}p/${product.id}`;
+    
     if (navigator.share) {
       try {
         await navigator.share({
@@ -51,11 +52,43 @@ export default function ProductCard({ product, onClick }) {
           text: `Mira este producto en Bazarito Cancún: ${product.name}`,
           url: url
         });
+        return;
       } catch (err) {
-        console.error('Error sharing:', err);
+        if (err.name === 'AbortError') return;
+        console.error('Error sharing via Web Share:', err);
       }
-    } else {
-      await navigator.clipboard.writeText(url);
+    }
+
+    // Robust Clipboard Copy with textarea fallback (crucial for Messenger / In-app Webviews)
+    let copySuccess = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        copySuccess = true;
+      } catch (err) {
+        console.warn('navigator.clipboard failed, trying textarea fallback:', err);
+      }
+    }
+
+    if (!copySuccess) {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        copySuccess = document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } catch (err) {
+        console.error('Fallback copy failed:', err);
+      }
+    }
+
+    if (copySuccess) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
