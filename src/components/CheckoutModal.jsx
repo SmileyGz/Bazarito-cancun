@@ -41,6 +41,13 @@ const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-prefere
 
 export default function CheckoutModal({ product, onClose, quantity = 1 }) {
   const [step, setStep]             = useState(STEPS.INFO);
+
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
   const [deliveryType, setDelivery] = useState('pickup');   // 'pickup' | 'delivery'
   const [zone, setZone]             = useState('short');
   const [name, setName]             = useState('');

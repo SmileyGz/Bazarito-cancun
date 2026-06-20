@@ -86,6 +86,13 @@ export default function ProductModal({ product, onClose }) {
   const [showCheckout, setShowCheckout] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   const isSold   = product.status === STATUSES.SOLD;
   const isOneOff = product.type   === PRODUCT_TYPES.ONE_OFF;
   const catLabel = CATEGORIES.find(c => c.id === product.category)?.label || product.category;
