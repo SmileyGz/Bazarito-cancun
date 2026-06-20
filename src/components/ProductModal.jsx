@@ -84,6 +84,7 @@ function ImageGallery({ images, placeholder }) {
 export default function ProductModal({ product, onClose }) {
   if (!product) return null;
   const [showCheckout, setShowCheckout] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const isSold   = product.status === STATUSES.SOLD;
   const isOneOff = product.type   === PRODUCT_TYPES.ONE_OFF;
@@ -145,12 +146,36 @@ export default function ProductModal({ product, onClose }) {
             </div>
           )}
 
-          {/* Price */}
+          {/* Price + Quantity selector */}
           <div className="pmodal-price-row">
             <div>
               <p style={{ fontSize:'0.8rem', color:'var(--text-muted)', fontWeight:600, marginBottom:2 }}>PRECIO</p>
               <span className="pmodal-price">${product.price.toLocaleString('es-MX')} MXN</span>
             </div>
+            {/* Quantity selector — only for stock products with known qty */}
+            {!isOneOff && (
+              <div className="pmodal-qty">
+                <p style={{ fontSize:'0.72rem', color:'var(--text-muted)', fontWeight:600, marginBottom:4, textTransform:'uppercase', letterSpacing:'0.06em' }}>Cantidad</p>
+                <div className="pmodal-qty-controls">
+                  <button
+                    className="pmodal-qty-btn"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    aria-label="Quitar una pieza"
+                  >−</button>
+                  <span className="pmodal-qty-val">{quantity}</span>
+                  <button
+                    className="pmodal-qty-btn"
+                    onClick={() => setQuantity(q => Math.min(product.stock ?? 99, q + 1))}
+                    disabled={product.stock != null && quantity >= product.stock}
+                    aria-label="Añadir una pieza"
+                  >+</button>
+                </div>
+                {product.stock != null && product.stock <= 5 && (
+                  <p style={{ fontSize:'0.7rem', color:'var(--orange)', fontWeight:700, marginTop:4 }}>⚡ Solo {product.stock} disponibles</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Delivery info */}
@@ -158,8 +183,8 @@ export default function ProductModal({ product, onClose }) {
             <div className="pmodal-ditem">
               <MapPin size={16} className="pmodal-dicon" />
               <div>
-                <p className="pmodal-dlabel">Pickup gratis</p>
-                <p className="pmodal-dval">Región 96, Cancún &middot; Producto listo en 15–30 min</p>
+                <p className="pmodal-dlabel">Recolección gratis</p>
+                <p className="pmodal-dval">Región 96, Cancún · Producto listo en 15–30 min</p>
               </div>
             </div>
             <div className="pmodal-ditem">
@@ -197,14 +222,14 @@ export default function ProductModal({ product, onClose }) {
               onClick={() => setShowCheckout(true)}
             >
               <ShoppingBag size={20} />
-              Pedir este producto
+              {quantity > 1 ? `Pedir ${quantity} piezas` : 'Pedir este producto'}
             </button>
           )}
         </div>
       </div>
 
       {showCheckout && (
-        <CheckoutModal product={product} onClose={() => setShowCheckout(false)} />
+        <CheckoutModal product={product} quantity={quantity} onClose={() => setShowCheckout(false)} />
       )}
 
       <style>{`
@@ -244,11 +269,38 @@ export default function ProductModal({ product, onClose }) {
         .pmodal-name { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); line-height: 1.3; }
         .pmodal-desc { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; }
         .pmodal-price-row {
-          display: flex; align-items: center; justify-content: space-between;
+          display: flex; align-items: flex-start; justify-content: space-between;
+          gap: 16px;
           padding: 14px; background: var(--bg-muted);
           border-radius: var(--radius-md); border: 1.5px solid var(--border);
         }
         .pmodal-price { font-family: var(--font-display); font-size: 1.6rem; font-weight: 900; color: var(--teal-dark); }
+        /* Quantity selector */
+        .pmodal-qty { display: flex; flex-direction: column; align-items: flex-end; }
+        .pmodal-qty-controls {
+          display: flex; align-items: center; gap: 0;
+          border: 2px solid var(--border); border-radius: var(--radius-full);
+          overflow: hidden; background: var(--bg-card);
+        }
+        .pmodal-qty-btn {
+          width: 34px; height: 34px;
+          background: var(--bg-card); border: none;
+          font-size: 1.2rem; font-weight: 700;
+          color: var(--text-primary);
+          cursor: pointer; display: flex; align-items: center; justify-content: center;
+          transition: background var(--dur-fast);
+        }
+        .pmodal-qty-btn:hover:not(:disabled) { background: var(--yellow); }
+        .pmodal-qty-btn:disabled { color: var(--text-muted); cursor: not-allowed; }
+        .pmodal-qty-val {
+          min-width: 32px; text-align: center;
+          font-family: var(--font-display); font-size: 1rem; font-weight: 800;
+          color: var(--text-primary);
+          border-left: 1.5px solid var(--border);
+          border-right: 1.5px solid var(--border);
+          padding: 0 4px;
+          line-height: 34px;
+        }
         .pmodal-delivery {
           display: flex; flex-direction: column; gap: 10px;
           padding: 14px; background: var(--bg-card);

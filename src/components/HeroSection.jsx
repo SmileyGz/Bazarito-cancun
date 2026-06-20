@@ -268,12 +268,7 @@ export default function HeroSection() {
           box-shadow: 0 2px 8px rgba(26,18,8,0.07);
         }
         .hero-pill svg { color: var(--teal); flex-shrink: 0; }
-        .hero-pill-trust {
-          background: rgba(26,122,109,0.1);
-          border-color: rgba(26,122,109,0.3);
-          color: var(--teal);
-          font-weight: 700;
-        }
+        .hero-pill-trust { font-weight: 700; }
 
         /* ── Mobile ── */
         @media (max-width: 640px) {

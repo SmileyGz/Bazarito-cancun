@@ -62,6 +62,7 @@ export default function ProductLandingPage() {
   const [loading, setLoading] = useState(true);
   const [showCheckout, setShowCheckout] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     async function load() {
@@ -222,8 +223,35 @@ export default function ProductLandingPage() {
             <div className="plp-price">${Number(product.price).toLocaleString('es-MX')} <span className="plp-currency">MXN</span></div>
             
             {/* Urgency microcopy — psychological trigger */}
-            {isAvailable && (
+            {isAvailable && product.status !== 'archived' && (
               <div className="plp-urgency">⚡ ¡Últimas piezas disponibles!</div>
+            )}
+
+            {/* Quantity selector — only for stock-type (repeatable) products */}
+            {isAvailable && product.type !== 'one_off' && (
+              <div className="plp-qty-row">
+                <div>
+                  <p className="plp-qty-label">Cantidad</p>
+                  {product.stock != null && product.stock <= 5 && (
+                    <p className="plp-qty-stock">⚡ Solo {product.stock} disponibles</p>
+                  )}
+                </div>
+                <div className="plp-qty-controls">
+                  <button
+                    className="plp-qty-btn"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    aria-label="Quitar una pieza"
+                  >−</button>
+                  <span className="plp-qty-val">{quantity}</span>
+                  <button
+                    className="plp-qty-btn"
+                    onClick={() => setQuantity(q => Math.min(product.stock ?? 99, q + 1))}
+                    disabled={product.stock != null && quantity >= product.stock}
+                    aria-label="Añadir una pieza"
+                  >+</button>
+                </div>
+              </div>
             )}
 
             <p className="plp-desc">{product.description || 'Producto disponible con entrega rápida en Cancún. Contáctanos para más información.'}</p>
@@ -232,7 +260,7 @@ export default function ProductLandingPage() {
               {isAvailable ? (
                 <button className="btn btn-primary plp-buy-btn" onClick={() => setShowCheckout(true)}>
                   <ShoppingBag size={20} />
-                  Lo quiero ahora
+                  {quantity > 1 ? `Lo quiero ×${quantity}` : 'Lo quiero ahora'}
                 </button>
               ) : (
                 <button className="btn plp-buy-btn" disabled style={{ background: 'var(--bg-muted)', color: 'var(--text-secondary)' }}>
@@ -254,7 +282,7 @@ export default function ProductLandingPage() {
         </div>
 
         {showCheckout && (
-          <CheckoutModal product={product} onClose={() => setShowCheckout(false)} />
+          <CheckoutModal product={product} quantity={quantity} onClose={() => setShowCheckout(false)} />
         )}
 
         <style>{`
@@ -327,6 +355,46 @@ export default function ProductLandingPage() {
             padding: 6px 12px;
             border-radius: var(--radius-full);
             border: 1px solid rgba(232, 75, 9, 0.2);
+          }
+          /* Quantity selector */
+          .plp-qty-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 14px;
+            background: var(--bg-muted);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+          }
+          .plp-qty-label {
+            font-size: 0.78rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--text-muted); margin: 0;
+          }
+          .plp-qty-stock {
+            font-size: 0.72rem; font-weight: 700;
+            color: var(--orange); margin: 4px 0 0;
+          }
+          .plp-qty-controls {
+            display: flex; align-items: center; gap: 0;
+            border: 2px solid var(--border); border-radius: var(--radius-full);
+            overflow: hidden; background: var(--bg-card);
+          }
+          .plp-qty-btn {
+            width: 38px; height: 38px;
+            background: var(--bg-card); border: none;
+            font-size: 1.3rem; font-weight: 700;
+            color: var(--text-primary);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 150ms ease;
+          }
+          .plp-qty-btn:hover:not(:disabled) { background: var(--yellow); }
+          .plp-qty-btn:disabled { color: var(--text-muted); cursor: not-allowed; }
+          .plp-qty-val {
+            min-width: 38px; text-align: center;
+            font-family: var(--font-display); font-size: 1.1rem; font-weight: 800;
+            color: var(--text-primary);
+            border-left: 1.5px solid var(--border);
+            border-right: 1.5px solid var(--border);
+            padding: 0 4px; line-height: 38px;
           }
           .plp-desc {
             font-size: 1rem; color: var(--text-secondary);

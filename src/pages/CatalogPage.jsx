@@ -61,10 +61,10 @@ export default function CatalogPage() {
             style={{ height: 50, display: 'block', margin: '0 auto 12px auto' }} 
           />
           <p style={{ fontSize:'0.85rem', color:'var(--text-secondary)', fontWeight: 600, marginBottom: 4 }}>
-            © 2026 Bazarito Cancun. Todos los derechos reservados
+            Productos reales · Entregas seguras · Región 96, Cancún, México
           </p>
           <p style={{ fontSize:'0.82rem', color:'var(--text-muted)' }}>
-            Productos reales · Entregas seguras · Región 96, Cancún, México
+            © 2026 Bazarito Cancun. Todos los derechos reservados
           </p>
           <div style={{ marginTop: 24 }}>
             <a 

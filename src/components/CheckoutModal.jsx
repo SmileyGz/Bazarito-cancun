@@ -32,7 +32,7 @@ const STEPS = { INFO: 'info', PICKUP_TIME: 'pickup_time', PAYMENT: 'payment', DO
 // ── Edge Function URL ───────────────────────────────────────────────────────
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-preference`;
 
-export default function CheckoutModal({ product, onClose }) {
+export default function CheckoutModal({ product, onClose, quantity = 1 }) {
   const [step, setStep]             = useState(STEPS.INFO);
   const [deliveryType, setDelivery] = useState('pickup');   // 'pickup' | 'delivery'
   const [zone, setZone]             = useState('short');
@@ -77,6 +77,7 @@ export default function CheckoutModal({ product, onClose }) {
           product_id:     product.id,
           product_name:   product.name,
           product_price:  product.price,
+          quantity:       quantity,
           delivery_zone:  deliveryType === 'delivery' ? zone : null,
           delivery_fee:   deliveryType === 'delivery' ? deliveryFee : 0,
           delivery_type:  deliveryType,
@@ -98,7 +99,8 @@ export default function CheckoutModal({ product, onClose }) {
   }
 
   // ── Total display helpers ─────────────────────────────────────────────────
-  const totalFull    = product.price + (deliveryType === 'delivery' ? deliveryFee : 0);
+  const productTotal = product.price * quantity;
+  const totalFull    = productTotal + (deliveryType === 'delivery' ? deliveryFee : 0);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -231,7 +233,7 @@ export default function CheckoutModal({ product, onClose }) {
             <div className="co-info-box">
               <p>📍 <strong>Dirección:</strong> Región 96, Cancún</p>
               <p style={{ marginTop: 6 }}>📞 Te enviaremos nuestra ubicación exacta y teléfono por <strong>WhatsApp</strong> al confirmar tu pedido.</p>
-              <p style={{ marginTop: 6 }}>💵 Precio del producto: <strong>${product.price.toLocaleString('es-MX')} MXN — pagas en efectivo al recoger.</strong></p>
+              <p style={{ marginTop: 6 }}>💵 Total a pagar: <strong>${productTotal.toLocaleString('es-MX')} MXN{quantity > 1 ? ` (${quantity} × $${product.price.toLocaleString('es-MX')})` : ''} — pagas en efectivo al recoger.</strong></p>
             </div>
 
             <button
@@ -243,7 +245,7 @@ export default function CheckoutModal({ product, onClose }) {
                 // Build a pre-filled WhatsApp message to business
                 const BAZARITO_WA = '529543388332';
                 const msg = encodeURIComponent(
-                  `🛒 ¡Hola Bazarito! Quiero apartar el producto:\n"${product.name}" ($${product.price.toLocaleString('es-MX')} MXN)\n\n👤 Nombre: ${name.trim()}\n📱 Teléfono: ${phone.trim()}\n⏰ Hora de recogida: ${pickupTime}\n\n¿Me puedes confirmar la dirección exacta? ¡Gracias!`
+                  `🛒 ¡Hola Bazarito! Quiero apartar el producto:\n"${product.name}"${quantity > 1 ? ` x${quantity}` : ''} ($${productTotal.toLocaleString('es-MX')} MXN)\n\n👤 Nombre: ${name.trim()}\n📱 Teléfono: ${phone.trim()}\n⏰ Hora de recogida: ${pickupTime}\n\n¿Me puedes confirmar la dirección exacta? ¡Gracias!`
                 );
                 window.open(`https://wa.me/${BAZARITO_WA}?text=${msg}`, '_blank');
                 onClose();
@@ -287,7 +289,7 @@ export default function CheckoutModal({ product, onClose }) {
                   </div>
                 </div>
                 <div className="co-pay-terms">
-                  ✅ <strong>Paga el resto en efectivo</strong> de forma segura, directo a tu repartidor al recibir tu pedido (${product.price.toLocaleString('es-MX')} MXN).
+                  ✅ <strong>Paga el resto en efectivo</strong> de forma segura, directo a tu repartidor al recibir tu pedido (${productTotal.toLocaleString('es-MX')} MXN{quantity > 1 ? ` · ${quantity} piezas` : ''}).
                 </div>
                 <button
                   id="co-pay-deposit-btn"
@@ -312,7 +314,7 @@ export default function CheckoutModal({ product, onClose }) {
                   </div>
                 </div>
                 <div className="co-pay-breakdown">
-                  <span>Producto</span><span>${product.price.toLocaleString('es-MX')}</span>
+                  <span>Producto{quantity > 1 ? ` × ${quantity}` : ''}</span><span>${productTotal.toLocaleString('es-MX')}</span>
                   <span>Envío ({selectedZone?.label})</span><span>+ ${deliveryFee}</span>
                   <span className="co-pay-total-label">Total</span><span className="co-pay-total-val">${totalFull.toLocaleString('es-MX')}</span>
                 </div>

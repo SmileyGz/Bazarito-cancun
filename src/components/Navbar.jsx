@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, Package } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { MESSENGER_URL } from '../data/store';
 
 export default function Navbar() {
@@ -17,10 +17,11 @@ export default function Navbar() {
             href={MESSENGER_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm navbar-chat-btn"
+            aria-label="Habla con nosotros por Messenger"
           >
-            <ShoppingCart size={16} />
-            <span className="hide-mobile">Preguntar</span>
+            <MessageCircle size={16} />
+            <span className="hide-mobile">Chat</span>
           </a>
         </div>
       </div>
