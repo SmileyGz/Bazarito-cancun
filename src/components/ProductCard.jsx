@@ -63,14 +63,22 @@ export default function ProductCard({ product, onClick }) {
 
   return (
     /*
-      SEO: Wrap card in a semantic <Link> so Googlebot can crawl /p/:id pages.
-      The onClick handler opens the modal instead of navigating (e.preventDefault),
-      giving humans the fast modal UX while bots follow the href.
+      SEO: Use a standard div for the card body to avoid nesting interactive
+      elements (like share buttons), which breaks native event bubbling.
+      To ensure Googlebot can crawl /p/:id pages, we make the CTA at the bottom
+      a semantic <Link> element.
     */
-    <Link
-      to={`/p/${product.id}`}
+    <div
       className="pcard"
-      onClick={(e) => { e.preventDefault(); onClick(product); }}
+      onClick={() => onClick(product)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(product);
+        }
+      }}
       aria-label={`Ver detalles de ${product.name}`}
     >
 
@@ -113,8 +121,17 @@ export default function ProductCard({ product, onClick }) {
           </div>
         )}
 
-        {/* ── Price CTA — opens modal ── */}
-        <button className="pcard-cta" aria-label={`Ver detalles de ${product.name}`}>
+        {/* ── Price CTA — links semantic URL for SEO, opens modal for users ── */}
+        <Link
+          to={`/p/${product.id}`}
+          className="pcard-cta"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClick(product);
+          }}
+          aria-label={`Ver detalles de ${product.name}`}
+        >
           <div className="pcard-cta-price">
             <span className="pcard-price">${product.price.toLocaleString('es-MX')}</span>
             <span className="pcard-currency">MXN</span>
@@ -123,7 +140,7 @@ export default function ProductCard({ product, onClick }) {
             <span>Ver</span>
             <ChevronRight size={15} strokeWidth={2.5} />
           </div>
-        </button>
+        </Link>
       </div>
 
       <style>{`
@@ -210,7 +227,6 @@ export default function ProductCard({ product, onClick }) {
         }
         .pcard-variant-chip strong { color: var(--text-primary); }
 
-        /* ── Price CTA button ── */
         .pcard-cta {
           display: flex; align-items: center; justify-content: space-between;
           gap: 8px;
@@ -223,6 +239,7 @@ export default function ProductCard({ product, onClick }) {
           font-family: var(--font-display);
           box-shadow: 0 3px 12px rgba(255,208,0,0.4);
           transition: all 200ms cubic-bezier(0.34,1.56,0.64,1);
+          text-decoration: none;
         }
         .pcard-cta:hover {
           background: var(--yellow-light);
@@ -284,6 +301,6 @@ export default function ProductCard({ product, onClick }) {
           .pcard-price { font-size: 1rem; }
         }
       `}</style>
-    </Link>
+    </div>
   );
 }

@@ -6,5 +6,5 @@ export default defineConfig({
   plugins: [react()],
   // GitHub Pages deploys to: https://smileygz.github.io/Bazarito-cancun/
   // This ensures all asset paths (JS, CSS, images) resolve correctly.
-  base: '/Bazarito-cancun/',
+  base: '/',
 })

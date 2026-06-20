@@ -2,7 +2,7 @@
   "name": "Bazarito Cancún",
   "short_name": "Bazarito",
   "description": "Tu bazar local con entregas seguras en Región 96 y alrededores.",
-  "start_url": "/Bazarito-cancun/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFBEE",
   "theme_color": "#FFD000",

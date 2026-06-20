@@ -32,7 +32,7 @@ export default {
               : 'Encuentra los mejores productos con entregas seguras en Región 96 y alrededores.';
             const image = product.images && product.images.length > 0 
               ? product.images[0] 
-              : `${url.origin}/Bazarito-cancun/Logo.png`;
+              : `${url.origin}/Logo.png`;
 
             // Obtener el HTML original de tu página
             const originRes = await fetch(request);

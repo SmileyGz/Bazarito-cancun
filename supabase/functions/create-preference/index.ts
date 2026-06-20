@@ -87,9 +87,9 @@ serve(async (req) => {
         customer_phone,
       },
       back_urls: {
-        success: 'https://smileygz.github.io/Bazarito-cancun/',
-        failure: 'https://smileygz.github.io/Bazarito-cancun/',
-        pending: 'https://smileygz.github.io/Bazarito-cancun/',
+        success: 'https://bazaritocancun.com/',
+        failure: 'https://bazaritocancun.com/',
+        pending: 'https://bazaritocancun.com/',
       },
       auto_return:        'approved',
       statement_descriptor: 'Bazarito Cancun',
