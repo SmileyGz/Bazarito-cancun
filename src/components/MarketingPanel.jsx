@@ -36,11 +36,11 @@ export default function MarketingPanel({ products, reload }) {
   const openLink = (url) => window.open(url, '_blank');
 
   // --- "What's Next" Queue Logic ---
-  let nextUp = null;
+  let productsWithStats = [];
   const validProducts = products.filter(p => p.marketing_ads && p.marketing_ads.some(ad => ad.status === 'pending'));
 
   if (validProducts.length > 0) {
-    const productsWithStats = validProducts.map(p => {
+    productsWithStats = validProducts.map(p => {
       const postedAds = p.marketing_ads.filter(ad => ad.status === 'posted' && ad.postedAt);
       let lastPosted = 0;
       if (postedAds.length > 0) {
@@ -58,13 +58,11 @@ export default function MarketingPanel({ products, reload }) {
       }
       return a.lastPosted - b.lastPosted;
     });
-
-    nextUp = productsWithStats[0];
   }
 
-  const handleMarkPosted = async () => {
-    if (!nextUp) return;
-    const { product, nextAdIndex } = nextUp;
+  const handleMarkPosted = async (item) => {
+    if (!item) return;
+    const { product, nextAdIndex } = item;
     const newAds = [...product.marketing_ads];
     newAds[nextAdIndex] = { ...newAds[nextAdIndex], status: 'posted', postedAt: new Date().toISOString() };
     
@@ -77,8 +75,8 @@ export default function MarketingPanel({ products, reload }) {
     }
   };
 
-  const postToFacebookAPI = async (target) => {
-    if (!nextUp) return;
+  const postToFacebookAPI = async (target, item) => {
+    if (!item) return;
     
     const token = localStorage.getItem('fb_page_access_token');
     const pageId = localStorage.getItem('fb_page_id');
@@ -96,7 +94,7 @@ export default function MarketingPanel({ products, reload }) {
     }
 
     setIsPosting(true);
-    const { nextAd } = nextUp;
+    const { nextAd } = item;
     const message = `${nextAd.copy}\n\nPrecio: ${nextAd.priceStr}\n\n${nextAd.description}`;
     
     try {
@@ -242,82 +240,87 @@ export default function MarketingPanel({ products, reload }) {
 
       {/* --- "What's Next" Queue View --- */}
       {view === 'queue' && (
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 20 }}>
-          {!nextUp ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 20, gap: 30 }}>
+          {!productsWithStats || productsWithStats.length === 0 ? (
             <div className="empty-state" style={{ maxWidth: 500, width: '100%' }}>
               <Rocket size={48} color="var(--teal)" style={{ marginBottom: 15 }} />
               <h3 style={{ margin: 0, marginBottom: 10 }}>¡Todo al día!</h3>
               <p>No tienes anuncios pendientes por publicar en tu inventario.</p>
             </div>
           ) : (
-            <div className="next-card">
-              <div className="next-card-header">
-                <h3>{nextUp.product.name}</h3>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <span className="badge badge-category">{nextUp.nextAd.category}</span>
-                  <span className="badge badge-profile">{nextUp.nextAd.profile || 'Sin Perfil'}</span>
+            productsWithStats.map((item, index) => (
+              <div key={item.product.id} className="next-card" style={{ opacity: index === 0 ? 1 : 0.85, transform: index === 0 ? 'scale(1)' : 'scale(0.98)', position: 'relative' }}>
+                <div className="next-card-header">
+                  <h3>
+                    <span style={{ color: 'var(--teal)', marginRight: 10 }}>#{index + 1}</span>
+                    {item.product.name}
+                  </h3>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span className="badge badge-category">{item.nextAd.category}</span>
+                    <span className="badge badge-profile">{item.nextAd.profile || 'Sin Perfil'}</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="next-card-body">
-                <div className="ad-preview">
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15}}>
-                    <div style={{ flex: 1 }}>
-                      <label>Headline</label>
-                      <p className="ad-copy">{nextUp.nextAd.copy}</p>
+                
+                <div className="next-card-body">
+                  <div className="ad-preview">
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15}}>
+                      <div style={{ flex: 1 }}>
+                        <label>Headline</label>
+                        <p className="ad-copy">{item.nextAd.copy}</p>
+                      </div>
+                      <button className="btn btn-icon" onClick={() => handleCopy(item.nextAd.copy, 'Headline')}>
+                        <Copy size={16} /> Copiar
+                      </button>
                     </div>
-                    <button className="btn btn-icon" onClick={() => handleCopy(nextUp.nextAd.copy, 'Headline')}>
-                      <Copy size={16} /> Copiar
+
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15}}>
+                      <div style={{ flex: 1 }}>
+                        <label>Precio</label>
+                        <p className="ad-price">{item.nextAd.priceStr}</p>
+                      </div>
+                      <button className="btn btn-icon" onClick={() => handleCopy(item.nextAd.priceStr, 'Precio')}>
+                        <Copy size={16} /> Copiar
+                      </button>
+                    </div>
+                    
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                      <div style={{ flex: 1, paddingRight: 15 }}>
+                        <label>Descripción</label>
+                        <pre className="ad-desc">{item.nextAd.description}</pre>
+                      </div>
+                      <button className="btn btn-icon" onClick={() => handleCopy(item.nextAd.description, 'Descripción')}>
+                        <Copy size={16} /> Copiar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="next-card-actions">
+                  <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Acciones Manuales (Marketplace)</p>
+                  <div className="links-group" style={{ marginBottom: '20px' }}>
+                    <button className="btn btn-outline" onClick={() => openLink('https://www.facebook.com/marketplace/create/item')} style={{gridColumn: '1 / -1'}}>
+                      Abrir Facebook Marketplace <ExternalLink size={14} />
                     </button>
                   </div>
 
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15}}>
-                    <div style={{ flex: 1 }}>
-                      <label>Precio</label>
-                      <p className="ad-price">{nextUp.nextAd.priceStr}</p>
-                    </div>
-                    <button className="btn btn-icon" onClick={() => handleCopy(nextUp.nextAd.priceStr, 'Precio')}>
-                      <Copy size={16} /> Copiar
+                  <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Publicación Automática con un clic (Graph API)</p>
+                  <div className="links-group">
+                    <button className="btn btn-api" onClick={() => postToFacebookAPI('page', item)} disabled={isPosting}>
+                      <Send size={14} /> Publicar en Página
+                    </button>
+                    <button className="btn btn-api" onClick={() => postToFacebookAPI('group', item)} disabled={isPosting}>
+                      <Send size={14} /> Publicar en Grupo
                     </button>
                   </div>
-                  
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                    <div style={{ flex: 1, paddingRight: 15 }}>
-                      <label>Descripción</label>
-                      <pre className="ad-desc">{nextUp.nextAd.description}</pre>
-                    </div>
-                    <button className="btn btn-icon" onClick={() => handleCopy(nextUp.nextAd.description, 'Descripción')}>
-                      <Copy size={16} /> Copiar
+
+                  <div style={{borderTop: '1px solid var(--border)', marginTop: 25, paddingTop: 25}}>
+                    <button className="btn btn-teal btn-lg" onClick={() => handleMarkPosted(item)} style={{ width: '100%' }}>
+                      <CheckCircle size={20} /> Terminar y marcar como publicado
                     </button>
                   </div>
                 </div>
               </div>
-              
-              <div className="next-card-actions">
-                <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Acciones Manuales (Marketplace)</p>
-                <div className="links-group" style={{ marginBottom: '20px' }}>
-                  <button className="btn btn-outline" onClick={() => openLink('https://www.facebook.com/marketplace/create/item')} style={{gridColumn: '1 / -1'}}>
-                    Abrir Facebook Marketplace <ExternalLink size={14} />
-                  </button>
-                </div>
-
-                <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Publicación Automática con un clic (Graph API)</p>
-                <div className="links-group">
-                  <button className="btn btn-api" onClick={() => postToFacebookAPI('page')} disabled={isPosting}>
-                    <Send size={14} /> Publicar en Página
-                  </button>
-                  <button className="btn btn-api" onClick={() => postToFacebookAPI('group')} disabled={isPosting}>
-                    <Send size={14} /> Publicar en Grupo
-                  </button>
-                </div>
-
-                <div style={{borderTop: '1px solid var(--border)', marginTop: 25, paddingTop: 25}}>
-                  <button className="btn btn-teal btn-lg" onClick={handleMarkPosted} style={{ width: '100%' }}>
-                    <CheckCircle size={20} /> Terminar y ver el siguiente
-                  </button>
-                </div>
-              </div>
-            </div>
+            ))
           )}
         </div>
       )}
