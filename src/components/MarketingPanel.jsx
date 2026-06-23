@@ -291,29 +291,26 @@ export default function MarketingPanel({ products, reload }) {
                     </div>
 
                     {/* Middle: Copy Snippets */}
-                    <div className="row-snippet" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div className="row-snippet" style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflow: 'hidden' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <strong style={{ minWidth: '65px' }}>Headline:</strong> 
-                        <span className="truncate-text" style={{ flex: 1 }}>{item.nextAd.copy}</span>
-                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.copy, 'Headline')} title="Copiar Headline" style={{ padding: '2px 6px', height: '24px' }}>
+                        <span className="truncate-text" style={{ flex: 1 }}>{item.nextAd.copy || ''}</span>
+                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.copy || '', 'Headline')} title="Copiar Headline" style={{ padding: '2px 6px', height: '24px' }}>
                           <Copy size={12} />
                         </button>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <strong style={{ minWidth: '65px' }}>Desc:</strong> 
-                        <span className="truncate-text" style={{ flex: 1, color: 'var(--text-muted)' }}>{item.nextAd.description.split('\n')[0]}...</span>
-                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.description, 'Descripción')} title="Copiar Descripción" style={{ padding: '2px 6px', height: '24px' }}>
+                        <span className="truncate-text" style={{ flex: 1, color: 'var(--text-muted)' }}>{(item.nextAd.description || '').split('\n')[0]}...</span>
+                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.description || '', 'Descripción')} title="Copiar Descripción" style={{ padding: '2px 6px', height: '24px' }}>
                           <Copy size={12} />
                         </button>
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: '2px' }}>
                         <strong style={{ minWidth: '65px' }}>Precio:</strong> 
-                        <span className="truncate-text" style={{ flex: 1, color: 'var(--teal)', fontWeight: 'bold' }}>{item.nextAd.priceStr}</span>
-                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.priceStr, 'Precio')} title="Copiar Precio" style={{ padding: '2px 6px', height: '24px' }}>
-                          <Copy size={12} />
-                        </button>
+                        <span className="truncate-text" style={{ flex: 1, color: 'var(--teal)', fontWeight: 'bold' }}>{item.nextAd.priceStr || ''}</span>
                       </div>
                     </div>
 
