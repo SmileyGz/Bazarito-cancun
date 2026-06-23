@@ -75,6 +75,23 @@ export default function MarketingPanel({ products, reload }) {
     }
   };
 
+  const handleUpdateProfile = async (product, adIndex) => {
+    const currentProfile = product.marketing_ads[adIndex].profile || '';
+    const newProfile = window.prompt("Ingresa la nueva letra del perfil (Ej: A, B, C):", currentProfile);
+    
+    if (newProfile !== null) {
+      const newAds = [...product.marketing_ads];
+      newAds[adIndex] = { ...newAds[adIndex], profile: newProfile.toUpperCase().trim() };
+      try {
+        await updateProductAds(product.id, newAds);
+        showToast('✅ Perfil re-asignado exitosamente');
+        reload();
+      } catch (err) {
+        showToast('❌ Error al actualizar el perfil');
+      }
+    }
+  };
+
   const postToFacebookAPI = async (target, item) => {
     if (!item) return;
     
@@ -248,72 +265,75 @@ export default function MarketingPanel({ products, reload }) {
               <p>No tienes anuncios pendientes por publicar en tu inventario.</p>
             </div>
           ) : (
-            productsWithStats.map((item, index) => (
-              <div key={item.product.id} className="next-card" style={{ opacity: index === 0 ? 1 : 0.85, transform: index === 0 ? 'scale(1)' : 'scale(0.98)', position: 'relative' }}>
-                <div className="next-card-header">
-                  <h3>
-                    <span style={{ color: 'var(--teal)', marginRight: 10 }}>#{index + 1}</span>
-                    {item.product.name}
-                  </h3>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <span className="badge badge-category">{item.nextAd.category}</span>
-                    <span className="badge badge-profile">{item.nextAd.profile || 'Sin Perfil'}</span>
-                  </div>
-                </div>
-                
-                <div className="next-card-body">
-                  <div className="ad-preview">
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15}}>
-                      <div style={{ flex: 1 }}>
-                        <label>Headline</label>
-                        <p className="ad-copy">{item.nextAd.copy}</p>
-                      </div>
-                      <button className="btn btn-icon" onClick={() => handleCopy(item.nextAd.copy, 'Headline')}>
-                        <Copy size={16} /> Copiar
-                      </button>
-                    </div>
-
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15}}>
-                      <div style={{ flex: 1 }}>
-                        <label>Precio</label>
-                        <p className="ad-price">{item.nextAd.priceStr}</p>
-                      </div>
-                      <button className="btn btn-icon" onClick={() => handleCopy(item.nextAd.priceStr, 'Precio')}>
-                        <Copy size={16} /> Copiar
-                      </button>
-                    </div>
+            <div className="compact-queue-list">
+              {productsWithStats.map((item, index) => {
+                const isFirst = index === 0;
+                return (
+                  <div key={item.product.id} className={`compact-queue-row ${isFirst ? 'row-first' : ''}`}>
                     
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                      <div style={{ flex: 1, paddingRight: 15 }}>
-                        <label>Descripción</label>
-                        <pre className="ad-desc">{item.nextAd.description}</pre>
+                    {/* Left: Rank & Info */}
+                    <div className="row-info">
+                      <div className="row-rank">#{index + 1}</div>
+                      <div>
+                        <h4 className="row-title">{item.product.name}</h4>
+                        <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
+                          <span className="badge badge-category" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{item.nextAd.category}</span>
+                          <span 
+                            className="badge badge-profile" 
+                            style={{ fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', border: '1px dashed var(--teal)' }}
+                            onClick={() => handleUpdateProfile(item.product, item.nextAdIndex)}
+                            title="Clic para re-asignar letra de perfil"
+                          >
+                            {item.nextAd.profile || 'Sin Asignar'} ✏️
+                          </span>
+                        </div>
                       </div>
-                      <button className="btn btn-icon" onClick={() => handleCopy(item.nextAd.description, 'Descripción')}>
-                        <Copy size={16} /> Copiar
+                    </div>
+
+                    {/* Middle: Copy Snippets */}
+                    <div className="row-snippet" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <strong style={{ minWidth: '65px' }}>Headline:</strong> 
+                        <span className="truncate-text" style={{ flex: 1 }}>{item.nextAd.copy}</span>
+                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.copy, 'Headline')} title="Copiar Headline" style={{ padding: '2px 6px', height: '24px' }}>
+                          <Copy size={12} />
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <strong style={{ minWidth: '65px' }}>Desc:</strong> 
+                        <span className="truncate-text" style={{ flex: 1, color: 'var(--text-muted)' }}>{item.nextAd.description.split('\n')[0]}...</span>
+                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.description, 'Descripción')} title="Copiar Descripción" style={{ padding: '2px 6px', height: '24px' }}>
+                          <Copy size={12} />
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <strong style={{ minWidth: '65px' }}>Precio:</strong> 
+                        <span className="truncate-text" style={{ flex: 1, color: 'var(--teal)', fontWeight: 'bold' }}>{item.nextAd.priceStr}</span>
+                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.priceStr, 'Precio')} title="Copiar Precio" style={{ padding: '2px 6px', height: '24px' }}>
+                          <Copy size={12} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Right: Actions (Aligned Together) */}
+                    <div className="row-actions" style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center' }}>
+                      <button className="btn btn-sm btn-api" onClick={() => postToFacebookAPI('page', item)} disabled={isPosting} title="Publicar Página">
+                        <Send size={14} /> <span className="hide-mobile">Página</span>
+                      </button>
+                      <button className="btn btn-sm btn-api" onClick={() => postToFacebookAPI('group', item)} disabled={isPosting} title="Publicar Grupo">
+                        <Send size={14} /> <span className="hide-mobile">Grupo</span>
+                      </button>
+                      <button className="btn btn-sm btn-teal" onClick={() => handleMarkPosted(item)} title="Marcar como Terminado">
+                        <CheckCircle size={14} /> <span className="hide-mobile">Terminar</span>
                       </button>
                     </div>
-                  </div>
-                </div>
-                
-                <div className="next-card-actions">
-                  <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Publicación Automática con un clic (Graph API)</p>
-                  <div className="links-group">
-                    <button className="btn btn-api" onClick={() => postToFacebookAPI('page', item)} disabled={isPosting}>
-                      <Send size={14} /> Publicar en Página
-                    </button>
-                    <button className="btn btn-api" onClick={() => postToFacebookAPI('group', item)} disabled={isPosting}>
-                      <Send size={14} /> Publicar en Grupo
-                    </button>
-                  </div>
 
-                  <div style={{borderTop: '1px solid var(--border)', marginTop: 25, paddingTop: 25}}>
-                    <button className="btn btn-teal btn-lg" onClick={() => handleMarkPosted(item)} style={{ width: '100%' }}>
-                      <CheckCircle size={20} /> Terminar y marcar como publicado
-                    </button>
                   </div>
-                </div>
-              </div>
-            ))
+                );
+              })}
+            </div>
           )}
         </div>
       )}
@@ -469,15 +489,57 @@ export default function MarketingPanel({ products, reload }) {
       <style>{`
         .marketing-panel { display: flex; flex-direction: column; gap: 20px; }
         
-        /* Next Card Styles */
-        .next-card { background: var(--bg-card); border: 2px solid var(--teal); border-radius: var(--radius-lg); padding: 30px; max-width: 650px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .next-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        .next-card-header h3 { margin: 0; font-size: 1.4rem; color: var(--text); }
-        .ad-preview label { display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; font-weight: 600; }
-        .ad-copy { font-weight: 600; margin: 0; font-size: 1.1rem; color: var(--text); }
-        .ad-price { font-size: 1.1rem; color: var(--teal); font-weight: bold; margin: 0; }
-        .ad-desc { font-size: 0.95rem; color: var(--text-secondary); white-space: pre-wrap; font-family: inherit; margin: 0; background: var(--bg-muted); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
-        .next-card-actions { margin-top: 30px; }
+        /* Next Card & Compact List Styles */
+        .compact-queue-list { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 900px; }
+        .compact-queue-row {
+          display: grid;
+          grid-template-columns: 200px 1fr auto;
+          gap: 20px;
+          align-items: center;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          padding: 16px;
+          box-shadow: var(--shadow-sm);
+          transition: transform var(--dur-fast);
+        }
+        .row-first {
+          border: 2px solid var(--teal);
+          box-shadow: 0 8px 24px rgba(26,122,109,0.15);
+          transform: scale(1.02);
+          background: #FDFFFC;
+        }
+        .row-info { display: flex; gap: 12px; align-items: flex-start; }
+        .row-rank {
+          font-family: var(--font-display);
+          font-size: 1.2rem;
+          font-weight: 800;
+          color: var(--teal);
+          margin-top: 2px;
+        }
+        .row-title { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
+        .row-snippet {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+        }
+        .truncate-text {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: block;
+        }
+        .row-first .row-snippet { font-size: 0.95rem; }
+        .row-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+        
+        @media (max-width: 768px) {
+          .compact-queue-row {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .row-actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; width: 100%; }
+          .row-actions .btn { flex: 1; justify-content: center; }
+        }
+
         
         /* Queue & Archive Styles */
         .queue-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
