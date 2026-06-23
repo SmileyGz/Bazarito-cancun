@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Copy, CheckCircle, Rocket } from 'lucide-react';
+import { ExternalLink, Copy, CheckCircle, Rocket, Send } from 'lucide-react';
 import { updateProductAds } from '../data/store';
 
 export default function MarketingPanel({ products, reload }) {
   const [toast, setToast] = useState(null);
+  const [isPosting, setIsPosting] = useState(false);
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 4000);
   };
 
   const handleCopy = (text, type) => {
@@ -17,41 +18,22 @@ export default function MarketingPanel({ products, reload }) {
 
   const openLink = (url) => window.open(url, '_blank');
 
-  // Find "What's Next"
-  // Logic: 
-  // 1. Find all products that have at least 1 pending ad.
-  // 2. Determine the "last posted date" for each product.
-  // 3. Sort products by the oldest "last posted date" (null/never posted goes first).
-  // 4. Pick the #1 product.
-  // 5. Get its first pending ad.
-  
   let nextUp = null;
 
   const validProducts = products.filter(p => p.marketing_ads && p.marketing_ads.some(ad => ad.status === 'pending'));
 
   if (validProducts.length > 0) {
     const productsWithStats = validProducts.map(p => {
-      // Find latest posted date for this product
       const postedAds = p.marketing_ads.filter(ad => ad.status === 'posted' && ad.postedAt);
-      let lastPosted = 0; // Epoch 0 means never posted
+      let lastPosted = 0;
       if (postedAds.length > 0) {
-        // Get the most recent date
         const dates = postedAds.map(ad => new Date(ad.postedAt).getTime());
         lastPosted = Math.max(...dates);
       }
-      
       const nextPendingIndex = p.marketing_ads.findIndex(ad => ad.status === 'pending');
-      
-      return {
-        product: p,
-        lastPosted,
-        nextAd: p.marketing_ads[nextPendingIndex],
-        nextAdIndex: nextPendingIndex
-      };
+      return { product: p, lastPosted, nextAd: p.marketing_ads[nextPendingIndex], nextAdIndex: nextPendingIndex };
     });
 
-    // Sort by oldest lastPosted first.
-    // If they have the same date (e.g. both 0), sort by product createdAt to be deterministic.
     productsWithStats.sort((a, b) => {
       if (a.lastPosted === b.lastPosted) {
         return new Date(a.product.createdAt || 0).getTime() - new Date(b.product.createdAt || 0).getTime();
@@ -70,10 +52,57 @@ export default function MarketingPanel({ products, reload }) {
     
     try {
       await updateProductAds(product.id, newAds);
-      showToast('✅ ¡Anuncio publicado!');
+      showToast('✅ ¡Marcado como publicado!');
       reload();
     } catch (err) {
-      showToast('❌ Error al actualizar.');
+      showToast('❌ Error al actualizar en la base de datos.');
+    }
+  };
+
+  const postToFacebookAPI = async (target) => {
+    if (!nextUp) return;
+    
+    const token = localStorage.getItem('fb_page_access_token');
+    const pageId = localStorage.getItem('fb_page_id');
+    const groupId = localStorage.getItem('fb_group_id');
+    
+    if (!token) {
+      showToast('❌ Falta Access Token. Configúralo en la pestaña Integraciones.');
+      return;
+    }
+    
+    const targetId = target === 'page' ? pageId : groupId;
+    if (!targetId) {
+      showToast(`❌ Falta el ID de la ${target === 'page' ? 'Página' : 'Grupo'}. Configúralo en Integraciones.`);
+      return;
+    }
+
+    setIsPosting(true);
+    const { nextAd } = nextUp;
+    const message = `${nextAd.copy}\n\nPrecio: ${nextAd.priceStr}\n\n${nextAd.description}`;
+    
+    try {
+      const res = await fetch(`https://graph.facebook.com/v19.0/${targetId}/feed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_token: token,
+          message: message
+        })
+      });
+      
+      const data = await res.json();
+      if (data.id) {
+        showToast(`✅ Publicado exitosamente en el ${target === 'page' ? 'Página' : 'Grupo'}!`);
+      } else {
+        console.error('FB API Error:', data);
+        showToast(`❌ Error FB: ${data.error?.message || 'Revisa la consola'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('❌ Error de conexión con Facebook API.');
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -138,21 +167,28 @@ export default function MarketingPanel({ products, reload }) {
             </div>
             
             <div className="next-card-actions">
-              <div className="links-group">
-                <button className="btn btn-outline" onClick={() => openLink('https://www.facebook.com/marketplace/create/item')}>
-                  Abrir Marketplace <ExternalLink size={14} />
-                </button>
-                <button className="btn btn-outline" onClick={() => openLink('https://www.facebook.com/profile.php?id=61574976372140')}>
-                  Abrir Página FB <ExternalLink size={14} />
-                </button>
-                <button className="btn btn-outline" onClick={() => openLink('https://www.facebook.com/groups/1255207176392664')}>
-                  Abrir Grupo FB <ExternalLink size={14} />
+              <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Acciones Manuales (Marketplace)</p>
+              <div className="links-group" style={{ marginBottom: '20px' }}>
+                <button className="btn btn-outline" onClick={() => openLink('https://www.facebook.com/marketplace/create/item')} style={{gridColumn: '1 / -1'}}>
+                  Abrir Facebook Marketplace <ExternalLink size={14} />
                 </button>
               </div>
 
-              <button className="btn btn-teal btn-lg" onClick={handleMarkPosted} style={{ width: '100%', marginTop: 20 }}>
-                <CheckCircle size={20} /> Marcar como Publicado y ver el siguiente
-              </button>
+              <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Publicación Automática con un clic (Graph API)</p>
+              <div className="links-group">
+                <button className="btn btn-api" onClick={() => postToFacebookAPI('page')} disabled={isPosting}>
+                  <Send size={14} /> Publicar en Página
+                </button>
+                <button className="btn btn-api" onClick={() => postToFacebookAPI('group')} disabled={isPosting}>
+                  <Send size={14} /> Publicar en Grupo
+                </button>
+              </div>
+
+              <div style={{borderTop: '1px solid var(--border)', marginTop: 25, paddingTop: 25}}>
+                <button className="btn btn-teal btn-lg" onClick={handleMarkPosted} style={{ width: '100%' }}>
+                  <CheckCircle size={20} /> Terminar y ver el siguiente
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -213,9 +249,25 @@ export default function MarketingPanel({ products, reload }) {
         
         .links-group {
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
+          grid-template-columns: 1fr 1fr;
           gap: 15px;
         }
+
+        .btn-api {
+          background: #1877F2;
+          color: white;
+          border: none;
+          padding: 12px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .btn-api:hover { background: #166FE5; }
+        .btn-api:disabled { opacity: 0.7; cursor: not-allowed; }
 
         .btn-lg {
           padding: 15px;
