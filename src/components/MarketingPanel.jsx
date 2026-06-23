@@ -37,7 +37,13 @@ export default function MarketingPanel({ products, reload }) {
 
   // --- "What's Next" Queue Logic ---
   let productsWithStats = [];
-  const validProducts = products.filter(p => p.marketing_ads && p.marketing_ads.some(ad => ad.status === 'pending'));
+  const validProducts = products.filter(p => {
+    // Hide one-off products that are already sold from the queue
+    if (p.type === 'one_off' && p.status === 'archived') {
+      return false;
+    }
+    return p.marketing_ads && p.marketing_ads.some(ad => ad.status === 'pending');
+  });
 
   if (validProducts.length > 0) {
     productsWithStats = validProducts.map(p => {
