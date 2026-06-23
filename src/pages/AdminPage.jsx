@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, LogOut, Eye, Package, TrendingUp, ClipboardList, AlertTriangle, DollarSign, Globe } from 'lucide-react';
+import { Plus, LogOut, Eye, Package, TrendingUp, ClipboardList, AlertTriangle, DollarSign, Globe, Megaphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LoginGate     from '../components/LoginGate';
 import StatsBar      from '../components/StatsBar';
@@ -10,6 +10,7 @@ import InsightsPanel from '../components/InsightsPanel';
 import SalesLog      from '../components/SalesLog';
 import FinancePanel  from '../components/FinancePanel';
 import IntegrationsPanel from '../components/IntegrationsPanel';
+import MarketingPanel from '../components/MarketingPanel';
 import {
   getProducts, addProduct, updateProduct, deleteProduct,
   recordSale, getStats, STATUSES, PRODUCT_TYPES,
@@ -42,6 +43,7 @@ function LowStockBanner({ products }) {
 const TABS = [
   { id: 'inventory', label: 'Inventario', icon: <Package size={17} /> },
   { id: 'sales',     label: 'Ventas',     icon: <ClipboardList size={17} /> },
+  { id: 'marketing', label: 'Marketing',  icon: <Megaphone size={17} /> },
   { id: 'insights',  label: 'Insights',   icon: <TrendingUp size={17} /> },
   { id: 'finance',   label: 'Finanzas',   icon: <DollarSign size={17} /> },
   { id: 'integrations', label: 'Integraciones', icon: <Globe size={17} /> },
@@ -206,6 +208,12 @@ export default function AdminPage() {
               </div>
             </div>
             <SalesLog key={refresh} onDelete={reload} />
+          </div>
+        )}
+
+        {tab === 'marketing' && (
+          <div className="animate-fade-in">
+            <MarketingPanel products={products} reload={reload} />
           </div>
         )}
 

@@ -82,6 +82,7 @@ export async function getProducts() {
     supplier: p.suppliers?.name || '',
     images: p.images || [],
     variants: p.custom_attributes?.variants || [],
+    marketing_ads: p.custom_attributes?.marketing_ads || [],
     delivery_enabled: p.custom_attributes?.delivery_enabled !== false, // default true
     createdAt: p.created_at
   }));
@@ -104,6 +105,7 @@ export async function addProduct(product) {
       custom_attributes: {
         ui_type: product.type,
         variants: product.variants || [],
+        marketing_ads: product.marketing_ads || [],
         delivery_enabled: product.delivery_enabled !== false,
       },
       status: product.status,
@@ -135,7 +137,7 @@ export async function updateProduct(id, updates) {
   if (updates.cost !== undefined) payload.cost = updates.cost;
   if (updates.images !== undefined) payload.images = updates.images;
   // Merge custom_attributes so ui_type, variants, and delivery_enabled all survive
-  if (updates.type !== undefined || updates.variants !== undefined || updates.delivery_enabled !== undefined) {
+  if (updates.type !== undefined || updates.variants !== undefined || updates.delivery_enabled !== undefined || updates.marketing_ads !== undefined) {
     const { data: existing, error: existingErr } = await supabase.from('products').select('custom_attributes').eq('id', id).single();
     if (existingErr) throw existingErr;
     const prev = existing?.custom_attributes || {};
@@ -144,6 +146,7 @@ export async function updateProduct(id, updates) {
       ...(updates.type !== undefined             ? { ui_type: updates.type }                       : {}),
       ...(updates.variants !== undefined         ? { variants: updates.variants }                   : {}),
       ...(updates.delivery_enabled !== undefined ? { delivery_enabled: updates.delivery_enabled }   : {}),
+      ...(updates.marketing_ads !== undefined    ? { marketing_ads: updates.marketing_ads }         : {}),
     };
   }
 
@@ -171,6 +174,10 @@ export async function updateProduct(id, updates) {
   }
 
   return prod;
+}
+
+export async function updateProductAds(id, ads) {
+  return updateProduct(id, { marketing_ads: ads });
 }
 
 export async function deleteProduct(id) {
