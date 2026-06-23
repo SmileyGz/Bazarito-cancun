@@ -172,3 +172,9 @@ export default function IntegrationsPanel() {
     </div>
   );
 }
+
+function StatusBadge({ status }) {
+  if (status === 'active') return <span className="status-badge status-active">Activo</span>;
+  if (status === 'pending') return <span className="status-badge status-pending">Pendiente</span>;
+  return <span className="status-badge status-error">Error</span>;
+}
