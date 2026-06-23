@@ -43,7 +43,7 @@ function LowStockBanner({ products }) {
 const TABS = [
   { id: 'inventory', label: 'Inventario', icon: <Package size={17} /> },
   { id: 'sales',     label: 'Ventas',     icon: <ClipboardList size={17} /> },
-  { id: 'marketing', label: 'Marketing',  icon: <Megaphone size={17} /> },
+  { id: 'marketing', label: 'FB Ads',  icon: <Megaphone size={17} /> },
   { id: 'insights',  label: 'Insights',   icon: <TrendingUp size={17} /> },
   { id: 'finance',   label: 'Finanzas',   icon: <DollarSign size={17} /> },
   { id: 'integrations', label: 'Integraciones', icon: <Globe size={17} /> },
