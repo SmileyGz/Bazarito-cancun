@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Megaphone, CheckCircle, Copy, Import, Settings } from 'lucide-react';
+import { Megaphone, CheckCircle, Copy, Import, Settings, Archive } from 'lucide-react';
 import { updateProductAds, addProduct } from '../data/store';
 
 export default function MarketingPanel({ products, reload }) {
@@ -20,6 +20,21 @@ export default function MarketingPanel({ products, reload }) {
       });
     }
   });
+
+  const archiveQueue = [];
+  productsWithAds.forEach(p => {
+    p.marketing_ads.forEach((ad, adIndex) => {
+      if (ad.status === 'posted') {
+        archiveQueue.push({
+          product: p,
+          ad,
+          adIndex
+        });
+      }
+    });
+  });
+  
+  archiveQueue.sort((a, b) => new Date(b.ad.postedAt) - new Date(a.ad.postedAt));
 
   const showToast = (msg) => {
     setToast(msg);
@@ -86,7 +101,13 @@ export default function MarketingPanel({ products, reload }) {
           <p>Gestiona tu rotación diaria de anuncios en Facebook</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn btn-outline" onClick={() => setView(view === 'queue' ? 'settings' : 'queue')}>
+          <button className={`btn ${view === 'archive' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('archive')}>
+            <Archive size={16} /> Historial
+          </button>
+          <button className={`btn ${view === 'queue' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('queue')}>
+            <Megaphone size={16} /> Cola Diaria
+          </button>
+          <button className={`btn ${view === 'settings' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('settings')}>
             <Settings size={16} /> Ajustes
           </button>
           <button className="btn btn-teal" onClick={handleImportLegacy} disabled={importing}>
@@ -130,6 +151,39 @@ export default function MarketingPanel({ products, reload }) {
                   </div>
                   <div className="queue-card-progress">
                     Variante {adIndex + 1} de {product.marketing_ads.length}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {view === 'archive' && (
+        <div className="queue-container">
+          {archiveQueue.length === 0 ? (
+            <div className="empty-state">
+              <Archive size={40} color="var(--border)" />
+              <p>No hay anuncios en el historial.</p>
+            </div>
+          ) : (
+            <div className="queue-list">
+              {archiveQueue.map(({ product, ad, adIndex }) => (
+                <div key={`${product.id}-${ad.id}-archived`} className="queue-card" style={{ opacity: 0.8 }}>
+                  <div className="queue-card-header">
+                    <h3>{product.name}</h3>
+                    <span className="badge badge-category">{ad.category}</span>
+                  </div>
+                  
+                  <div className="queue-card-body">
+                    <p className="queue-profile"><strong>Perfil Asignado:</strong> {ad.profile || 'Sin Asignar'}</p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      Publicado el: {new Date(ad.postedAt).toLocaleDateString()}
+                    </p>
+                    <div className="ad-preview" style={{ background: 'transparent', border: '1px solid var(--border)' }}>
+                      <p className="ad-copy">{ad.copy}</p>
+                      <p className="ad-price"><strong>Precio:</strong> {ad.priceStr}</p>
+                    </div>
                   </div>
                 </div>
               ))}
