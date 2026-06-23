@@ -236,9 +236,6 @@ export default function MarketingPanel({ products, reload }) {
           <button className={`btn ${view === 'settings' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('settings')}>
             <Settings size={16} /> Ajustes
           </button>
-          <button className="btn btn-teal" onClick={handleImportLegacy} disabled={importing}>
-            <Import size={16} /> {importing ? 'Importando...' : 'Legacy'}
-          </button>
         </div>
       </div>
 
