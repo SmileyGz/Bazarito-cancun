@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { ExternalLink, Copy, CheckCircle, Calendar, X } from 'lucide-react';
-import { updateProductAds } from '../data/store';
+import { ExternalLink, Copy, CheckCircle, Settings, Archive, Plus, Trash2 } from 'lucide-react';
+import { updateProductAds, addProduct } from '../data/store';
 
 export default function MarketingPanel({ products, reload }) {
-  const [selectedAd, setSelectedAd] = useState(null); // { product, ad, adIndex }
+  const [view, setView] = useState('sheet-1'); // sheet-1 to sheet-8, settings, intake, archive
   const [toast, setToast] = useState(null);
 
   // Filter products that have marketing ads
   const productsWithAds = products.filter(p => p.marketing_ads && p.marketing_ads.length > 0);
+  
+  // Sort products to maintain a consistent order (new products go to the bottom)
+  // Assuming products have a createdAt, or just by ID/name to keep it stable
+  const sortedProducts = [...productsWithAds].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
 
   const showToast = (msg) => {
     setToast(msg);
@@ -19,28 +23,83 @@ export default function MarketingPanel({ products, reload }) {
     showToast(`✅ ${type} copiado.`);
   };
 
-  const handleMarkPosted = async () => {
-    if (!selectedAd) return;
-    const { product, adIndex } = selectedAd;
+  const handleMarkPosted = async (product, adIndex) => {
     const newAds = [...product.marketing_ads];
     newAds[adIndex] = { ...newAds[adIndex], status: 'posted', postedAt: new Date().toISOString() };
-    
     try {
       await updateProductAds(product.id, newAds);
-      showToast('✅ Marcado como publicado hoy.');
+      showToast('✅ Marcado como publicado.');
       reload();
-      setSelectedAd(null); // Close modal
     } catch (err) {
       showToast('❌ Error al actualizar.');
     }
   };
 
-  const openLink = (url) => {
-    window.open(url, '_blank');
-  };
+  const openLink = (url) => window.open(url, '_blank');
 
-  // Sort products alphabetically or by some stable order
-  const sortedProducts = [...productsWithAds].sort((a, b) => a.name.localeCompare(b.name));
+  // Helper to render the current sheet
+  const renderSheet = (sheetIndex) => { // 0 to 7
+    return (
+      <div className="queue-list">
+        {sortedProducts.map((product) => {
+          const ad = product.marketing_ads[sheetIndex];
+          if (!ad) return null; // If product doesn't have an ad at this index
+
+          const isPosted = ad.status === 'posted';
+
+          return (
+            <div key={`${product.id}-${sheetIndex}`} className={`queue-card ${isPosted ? 'is-posted' : ''}`}>
+              <div className="queue-card-header">
+                <h3>{product.name.substring(0, 45)}{product.name.length > 45 ? '...' : ''}</h3>
+                <span className="badge badge-category">{ad.category}</span>
+              </div>
+              
+              <div className="queue-card-body">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <p className="queue-profile"><strong>Perfil Asignado:</strong> {ad.profile || 'Sin Asignar'}</p>
+                  {isPosted && <span className="badge-posted">✅ Publicado ({new Date(ad.postedAt).toLocaleDateString()})</span>}
+                </div>
+                
+                <div className="ad-preview">
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                    <p className="ad-copy">{ad.copy}</p>
+                    <button className="btn btn-icon btn-sm" onClick={() => handleCopy(ad.copy, 'Headline')} title="Copiar Copy">
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                  <p className="ad-price"><strong>Precio:</strong> {ad.priceStr}</p>
+                  
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 10}}>
+                    <pre className="ad-desc">{ad.description.substring(0, 120)}...</pre>
+                    <button className="btn btn-icon btn-sm" onClick={() => handleCopy(ad.description, 'Descripción')} title="Copiar Descripción">
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="queue-card-actions">
+                <button className="btn btn-primary btn-sm" onClick={() => handleMarkPosted(product, sheetIndex)} disabled={isPosted} style={{flex: 1}}>
+                  <CheckCircle size={14} /> {isPosted ? 'Ya Publicado' : 'Marcar Publicado'}
+                </button>
+                <div style={{display: 'flex', gap: 5}}>
+                  <button className="btn btn-outline btn-sm" onClick={() => openLink('https://www.facebook.com/marketplace/create/item')} title="Marketplace">
+                    <ExternalLink size={14} /> Mkt
+                  </button>
+                  <button className="btn btn-outline btn-sm" onClick={() => openLink('https://www.facebook.com/profile.php?id=61574976372140')} title="Facebook Page">
+                    <ExternalLink size={14} /> Pág
+                  </button>
+                  <button className="btn btn-outline btn-sm" onClick={() => openLink('https://www.facebook.com/groups/1255207176392664')} title="Facebook Group">
+                    <ExternalLink size={14} /> Grp
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="marketing-panel">
@@ -48,311 +107,109 @@ export default function MarketingPanel({ products, reload }) {
       
       <div className="admin-section-header">
         <div>
-          <h2>Matriz de Publicaciones</h2>
-          <p>Navega por tus productos fila por fila. Haz clic en una caja para ver el contenido, copiarlo y registrar la fecha de publicación.</p>
+          <h2>Sistema de Listas (1 al 8)</h2>
+          <p>Navega lista por lista. Cada lista contiene una variación específica para todos tus productos.</p>
         </div>
       </div>
 
-      <div className="matrix-container">
-        <table className="matrix-table">
-          <thead>
-            <tr>
-              <th style={{ width: '300px', textAlign: 'left' }}>Producto</th>
-              <th colSpan={8} style={{ textAlign: 'center' }}>Variaciones (Cajas de Fecha)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedProducts.map(product => (
-              <tr key={product.id}>
-                <td className="product-name-cell">
-                  <strong>{product.name.substring(0, 40)}{product.name.length > 40 ? '...' : ''}</strong>
-                </td>
-                <td className="boxes-cell" colSpan={8}>
-                  <div className="boxes-row">
-                    {product.marketing_ads.map((ad, idx) => {
-                      const isPosted = ad.status === 'posted' && ad.postedAt;
-                      const dateStr = isPosted ? new Date(ad.postedAt).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' }) : '';
-                      
-                      return (
-                        <div 
-                          key={ad.id || idx} 
-                          className={`ad-box ${isPosted ? 'posted' : 'pending'}`}
-                          onClick={() => setSelectedAd({ product, ad, adIndex: idx })}
-                          title={`Categoría: ${ad.category} | Perfil: ${ad.profile}`}
-                        >
-                          <div className="box-profile">{ad.profile || `V${idx+1}`}</div>
-                          <div className="box-date">{dateStr || '-'}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="sheet-tabs">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+          <button 
+            key={num} 
+            className={`sheet-tab ${view === `sheet-${num}` ? 'active' : ''}`}
+            onClick={() => setView(`sheet-${num}`)}
+          >
+            Lista {num}
+          </button>
+        ))}
+        <div style={{ borderLeft: '1px solid var(--border)', margin: '0 10px' }}></div>
+        <button className={`sheet-tab ${view === 'intake' ? 'active' : ''}`} onClick={() => setView('intake')}>
+          <Plus size={14} /> Crear
+        </button>
       </div>
 
-      {/* MODAL para ver el anuncio y publicar */}
-      {selectedAd && (
-        <div className="modal-overlay" onClick={() => setSelectedAd(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{selectedAd.product.name}</h3>
-              <button className="btn-icon" onClick={() => setSelectedAd(null)}><X size={20} /></button>
-            </div>
-            
-            <div className="modal-body">
-              <div className="info-tags">
-                <span className="badge">Categoría: {selectedAd.ad.category}</span>
-                <span className="badge badge-profile">Perfil: {selectedAd.ad.profile}</span>
-              </div>
-
-              <div className="content-section">
-                <div className="content-header">
-                  <strong>Headline / Copy</strong>
-                  <button className="btn btn-outline btn-sm" onClick={() => handleCopy(selectedAd.ad.copy, 'Copy')}>
-                    <Copy size={14} /> Copiar
-                  </button>
-                </div>
-                <div className="content-box">{selectedAd.ad.copy}</div>
-              </div>
-
-              <div className="content-section">
-                <div className="content-header">
-                  <strong>Precio</strong>
-                  <button className="btn btn-outline btn-sm" onClick={() => handleCopy(selectedAd.ad.priceStr, 'Precio')}>
-                    <Copy size={14} /> Copiar
-                  </button>
-                </div>
-                <div className="content-box">{selectedAd.ad.priceStr}</div>
-              </div>
-
-              <div className="content-section">
-                <div className="content-header">
-                  <strong>Descripción</strong>
-                  <button className="btn btn-outline btn-sm" onClick={() => handleCopy(selectedAd.ad.description, 'Descripción')}>
-                    <Copy size={14} /> Copiar
-                  </button>
-                </div>
-                <div className="content-box desc-box">{selectedAd.ad.description}</div>
-              </div>
-            </div>
-
-            <div className="modal-actions-grid">
-              <div className="links-group">
-                <button className="btn btn-fb" onClick={() => openLink('https://www.facebook.com/marketplace/create/item')}>
-                  Marketplace <ExternalLink size={14} />
-                </button>
-                <button className="btn btn-fb" onClick={() => openLink('https://www.facebook.com/profile.php?id=61574976372140')}>
-                  Página FB <ExternalLink size={14} />
-                </button>
-                <button className="btn btn-fb" onClick={() => openLink('https://www.facebook.com/groups/1255207176392664')}>
-                  Grupo FB <ExternalLink size={14} />
-                </button>
-              </div>
-
-              <div className="mark-group">
-                <button className="btn btn-teal" onClick={handleMarkPosted} style={{ width: '100%' }}>
-                  <Calendar size={16} /> Marcar Fecha de Hoy en la Caja
-                </button>
-              </div>
-            </div>
+      <div className="queue-container">
+        {view.startsWith('sheet-') && renderSheet(parseInt(view.replace('sheet-', '')) - 1)}
+        
+        {view === 'intake' && (
+          <div className="empty-state">
+            <p>Sección de creación de campañas. (Vuelve a las Listas para ver lo que sigue).</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <style>{`
         .marketing-panel { display: flex; flex-direction: column; gap: 20px; }
         
-        .matrix-container {
+        .sheet-tabs {
+          display: flex;
           background: var(--bg-card);
-          border: 1px solid var(--border);
+          padding: 8px;
           border-radius: var(--radius-lg);
+          border: 1px solid var(--border);
           overflow-x: auto;
           box-shadow: var(--shadow-sm);
         }
-        
-        .matrix-table {
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 800px;
-        }
-        
-        .matrix-table th {
-          background: var(--bg-muted);
-          padding: 12px 16px;
-          border-bottom: 2px solid var(--border);
-          font-weight: 600;
-          color: var(--text-secondary);
-        }
-        
-        .matrix-table td {
-          padding: 12px 16px;
-          border-bottom: 1px solid var(--border);
-          vertical-align: middle;
-        }
 
-        .matrix-table tr:hover {
-          background: var(--bg-muted);
-        }
-
-        .product-name-cell {
-          color: var(--text);
-          font-size: 0.95rem;
-        }
-
-        .boxes-row {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        .ad-box {
-          width: 60px;
-          height: 50px;
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s;
-          background: var(--bg-card);
-        }
-
-        .ad-box:hover {
-          border-color: var(--teal);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .box-profile {
-          font-size: 0.7rem;
-          font-weight: bold;
-          color: var(--text-secondary);
-        }
-
-        .box-date {
-          font-size: 0.75rem;
-          color: var(--text);
-          font-weight: 500;
-        }
-
-        .ad-box.posted {
-          background: #E8F6EC;
-          border-color: #A5D6A7;
-        }
-        .ad-box.posted .box-date {
-          color: #2E7D32;
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0,0,0,0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          backdrop-filter: blur(2px);
-        }
-        
-        .modal-content {
-          background: var(--bg-card);
-          width: 100%;
-          max-width: 650px;
-          border-radius: var(--radius-lg);
-          display: flex;
-          flex-direction: column;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-          max-height: 90vh;
-        }
-
-        .modal-header {
-          padding: 20px;
-          border-bottom: 1px solid var(--border);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        
-        .modal-header h3 { margin: 0; font-size: 1.2rem; }
-        
-        .modal-body {
-          padding: 20px;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-        }
-
-        .info-tags { display: flex; gap: 10px; margin-bottom: 10px; }
-        .badge { background: var(--bg-muted); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
-        .badge-profile { background: #E0F2F1; color: #00796B; }
-
-        .content-section {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        
-        .content-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .content-box {
-          background: var(--bg-muted);
-          padding: 12px;
-          border-radius: 6px;
-          font-size: 0.9rem;
-          border: 1px solid var(--border);
-        }
-
-        .desc-box {
-          white-space: pre-wrap;
-          max-height: 200px;
-          overflow-y: auto;
-        }
-
-        .modal-actions-grid {
-          padding: 20px;
-          border-top: 1px solid var(--border);
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          background: var(--bg-muted);
-          border-bottom-left-radius: var(--radius-lg);
-          border-bottom-right-radius: var(--radius-lg);
-        }
-
-        .links-group {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 10px;
-        }
-
-        .btn-fb {
-          background: #1877F2;
-          color: white;
+        .sheet-tab {
+          padding: 8px 16px;
           border: none;
+          background: transparent;
+          cursor: pointer;
+          font-weight: 600;
+          color: var(--text-secondary);
+          border-radius: 6px;
+          white-space: nowrap;
           display: flex;
           align-items: center;
-          justify-content: center;
           gap: 6px;
-          font-weight: 600;
-          cursor: pointer;
-          padding: 8px;
-          border-radius: 6px;
         }
-        .btn-fb:hover { background: #166FE5; }
 
-        .btn-icon { background: transparent; border: none; cursor: pointer; color: var(--text-secondary); }
-        .btn-icon:hover { color: var(--text); }
+        .sheet-tab:hover {
+          background: var(--bg-muted);
+          color: var(--text);
+        }
+
+        .sheet-tab.active {
+          background: var(--teal);
+          color: white;
+        }
+
+        .queue-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        
+        .queue-card { 
+          background: var(--bg-card); 
+          border: 1px solid var(--border); 
+          border-radius: var(--radius-lg); 
+          padding: 20px; 
+          display: flex; 
+          flex-direction: column; 
+          box-shadow: var(--shadow-sm); 
+          transition: opacity 0.3s;
+        }
+
+        .queue-card.is-posted {
+          opacity: 0.5;
+          order: 9999; /* Move to bottom if desired, or keep in place. Keeping in place for now */
+        }
+        
+        .queue-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .queue-card-header h3 { margin: 0; font-size: 1.05rem; color: var(--text); }
+        .badge-category { background: var(--bg-muted); color: var(--text-secondary); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .queue-profile { font-size: 0.85rem; color: var(--teal); margin: 0; }
+        .badge-posted { font-size: 0.75rem; font-weight: bold; color: #2E7D32; background: #E8F6EC; padding: 2px 8px; border-radius: 12px; }
+        
+        .ad-preview { background: var(--bg-muted); padding: 12px; border-radius: var(--radius-md); }
+        .ad-copy { font-weight: 600; margin: 0; font-size: 0.95rem; flex: 1; }
+        .ad-price { font-size: 0.9rem; color: var(--text-secondary); margin-top: 8px; margin-bottom: 8px; }
+        .ad-desc { font-size: 0.8rem; color: var(--text-muted); white-space: pre-wrap; font-family: inherit; margin: 0; flex: 1; }
+        
+        .queue-card-actions { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        
+        .btn-icon { background: transparent; border: 1px solid var(--border); padding: 4px; border-radius: 4px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { background: var(--bg-card-hover); color: var(--text); }
+        
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-muted); text-align: center; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border); }
       `}</style>
     </div>
   );
