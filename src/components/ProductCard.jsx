@@ -16,21 +16,15 @@ const PLACEHOLDER_COLORS = {
 };
 
 function ProductImage({ product }) {
-  const [imgError, setImgError] = useState(false);
   const ph = PLACEHOLDER_COLORS[product.category] || { bg: 'linear-gradient(135deg,#FFF8D6,#FFE89A)', emoji: '📦' };
   const src = product.images?.[0] || product.image || null;
-  
-  // Also check if src is a string with "undefined" which sometimes happens
-  const isValidSrc = typeof src === 'string' && src.trim() !== '' && src !== 'undefined' && src !== 'null';
-
-  if (isValidSrc && !imgError) {
+  if (src) {
     return (
       <img
         src={src}
         alt={product.name}
         className="pcard-photo"
         loading="lazy"
-        onError={() => setImgError(true)}
       />
     );
   }
