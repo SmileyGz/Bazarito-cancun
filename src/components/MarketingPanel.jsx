@@ -53,7 +53,8 @@ export default function MarketingPanel({ products, reload }) {
 
     productsWithStats.sort((a, b) => {
       if (a.lastPosted === b.lastPosted) {
-        return new Date(a.product.createdAt || 0).getTime() - new Date(b.product.createdAt || 0).getTime();
+        // Prioritize newest created products if they have the same lastPosted date (e.g. both 0)
+        return new Date(b.product.createdAt || 0).getTime() - new Date(a.product.createdAt || 0).getTime();
       }
       return a.lastPosted - b.lastPosted;
     });
