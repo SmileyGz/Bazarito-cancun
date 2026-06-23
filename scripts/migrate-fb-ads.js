@@ -47,7 +47,7 @@ async function run() {
       if (currentAds.length > 0) {
         allProductsData.push({ name: currentProductName, ads: currentAds });
       }
-      currentProductName = copy.substring(0, 30) + "...";
+      currentProductName = Array.from(copy).slice(0, 30).join('') + "...";
       const firstLine = desc.split('\\n')[0].replace(/[^a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ]/g, '').trim();
       if (firstLine.length > 5 && firstLine.length < 50) currentProductName = firstLine;
       
