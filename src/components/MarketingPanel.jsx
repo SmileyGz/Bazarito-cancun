@@ -296,13 +296,6 @@ export default function MarketingPanel({ products, reload }) {
                 </div>
                 
                 <div className="next-card-actions">
-                  <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Acciones Manuales (Marketplace)</p>
-                  <div className="links-group" style={{ marginBottom: '20px' }}>
-                    <button className="btn btn-outline" onClick={() => openLink('https://www.facebook.com/marketplace/create/item')} style={{gridColumn: '1 / -1'}}>
-                      Abrir Facebook Marketplace <ExternalLink size={14} />
-                    </button>
-                  </div>
-
                   <p style={{textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px'}}>Publicación Automática con un clic (Graph API)</p>
                   <div className="links-group">
                     <button className="btn btn-api" onClick={() => postToFacebookAPI('page', item)} disabled={isPosting}>
