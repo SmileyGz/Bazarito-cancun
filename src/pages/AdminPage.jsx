@@ -11,6 +11,7 @@ import SalesLog      from '../components/SalesLog';
 import FinancePanel  from '../components/FinancePanel';
 import IntegrationsPanel from '../components/IntegrationsPanel';
 import MarketingPanel from '../components/MarketingPanel';
+import ReceiptModal from '../components/ReceiptModal';
 import {
   getProducts, addProduct, updateProduct, deleteProduct,
   recordSale, getStats, STATUSES, PRODUCT_TYPES,
@@ -58,6 +59,7 @@ export default function AdminPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing]   = useState(null);
   const [saleProduct, setSaleProduct] = useState(null);
+  const [receiptSale, setReceiptSale] = useState(null);
   const [toast, setToast]       = useState(null);
   const [refresh, setRefresh]   = useState(0);
 
@@ -111,6 +113,17 @@ export default function AdminPage() {
       const total = (Number(saleData.salePrice) * saleData.quantity) + (saleData.deliveryFeeAmount || 0);
       setToast(`🔴 Venta registrada — $${total.toLocaleString('es-MX')} MXN`);
       reload();
+
+      // Open receipt immediately
+      const clientMeta = [saleData.clientName, saleData.clientPhone, saleData.clientEmail].filter(Boolean).join(' | ');
+      const fullNotes = [saleData.notes, clientMeta ? `Cliente: ${clientMeta}` : ''].filter(Boolean).join(' · ');
+      setReceiptSale({
+        saleDate: saleData.saleDate || new Date().toISOString(),
+        productName: saleProduct.name,
+        quantity: saleData.quantity,
+        salePrice: Number(saleData.salePrice) || saleProduct.price,
+        notes: fullNotes
+      });
     } catch (err) {
       setToast(`❌ Error al registrar: ${err.message}`);
       console.error('handleSaleConfirm error:', err);
@@ -254,8 +267,13 @@ export default function AdminPage() {
           onClose={() => { setFormOpen(false); setEditing(null); }} />
       )}
       {saleProduct && (
-        <SaleModal product={saleProduct} onConfirm={handleSaleConfirm}
+        <SaleModal product={saleProduct}
+          onConfirm={handleSaleConfirm}
           onClose={() => setSaleProduct(null)} />
+      )}
+
+      {receiptSale && (
+        <ReceiptModal sale={receiptSale} onClose={() => setReceiptSale(null)} />
       )}
 
       {/* Toast */}

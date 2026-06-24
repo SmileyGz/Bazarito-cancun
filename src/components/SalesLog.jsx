@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2, Truck, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSales, deleteSale, CATEGORIES, DELIVERY_METHODS } from '../data/store';
+import ReceiptModal from './ReceiptModal';
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -11,6 +12,7 @@ export default function SalesLog({ onDelete }) {
   const [month, setMonth] = useState(now.getMonth());
   const [filterCat, setFilterCat] = useState('all');
   const [allSales, setAllSales] = useState([]);
+  const [receiptSale, setReceiptSale] = useState(null);
 
   React.useEffect(() => {
     async function load() {
@@ -161,14 +163,23 @@ export default function SalesLog({ onDelete }) {
                     </span>
                   </div>
 
-                  {/* Delete */}
-                  <button className="btn btn-icon slog-del" onClick={() => handleDelete(sale.id)} title="Eliminar registro">
-                    <Trash2 size={14} />
-                  </button>
+                  {/* Actions */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <button className="btn btn-outline btn-sm" onClick={() => setReceiptSale(sale)} title="Generar Recibo" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+                      🧾 Recibo
+                    </button>
+                    <button className="btn btn-icon slog-del" onClick={() => handleDelete(sale.id)} title="Eliminar registro" style={{ alignSelf: 'flex-end' }}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               );
             })}
         </div>
+      )}
+
+      {receiptSale && (
+        <ReceiptModal sale={receiptSale} onClose={() => setReceiptSale(null)} />
       )}
 
       <style>{`
