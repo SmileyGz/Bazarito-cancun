@@ -340,6 +340,8 @@ export async function getStats() {
   const totalRevenue = sales.reduce((s, sl) => s + sl.salePrice * sl.quantity, 0);
   const totalProfit  = sales.reduce((s, sl) => s + sl.profit, 0);
   const totalUnitsSold = sales.reduce((s, sl) => s + sl.quantity, 0);
+  const lowStock = active.filter(p => p.type === PRODUCT_TYPES.STOCK && (p.stock || 0) <= 2).length;
+
   return {
     total: products.length,
     active: active.length,
@@ -348,7 +350,8 @@ export async function getStats() {
     totalValue,
     totalRevenue,
     totalProfit,
-    totalUnitsSold
+    totalUnitsSold,
+    lowStock
   };
 }
 
