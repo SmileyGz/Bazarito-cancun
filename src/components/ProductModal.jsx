@@ -95,6 +95,7 @@ export default function ProductModal({ product, onClose }) {
 
   const isSold   = product.status === STATUSES.SOLD;
   const isOneOff = product.type   === PRODUCT_TYPES.ONE_OFF;
+  const deliveryEnabled = product.delivery_enabled !== false;
   const catLabel = CATEGORIES.find(c => c.id === product.category)?.label || product.category;
   const ph       = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', emoji: '📦' };
 
@@ -194,20 +195,24 @@ export default function ProductModal({ product, onClose }) {
                 <p className="pmodal-dval">Región 96, Cancún · Producto listo en 15–30 min</p>
               </div>
             </div>
-            <div className="pmodal-ditem">
-              <Truck size={16} className="pmodal-dicon" />
-              <div>
-                <p className="pmodal-dlabel">Entrega a domicilio</p>
-                <p className="pmodal-dval">$50 (1–6 km) · $80 (6–10 km)</p>
-              </div>
-            </div>
-            <div className="pmodal-ditem">
-              <Clock size={16} className="pmodal-dicon" />
-              <div>
-                <p className="pmodal-dlabel">Horario nocturno</p>
-                <p className="pmodal-dval">Después de 8 PM $100</p>
-              </div>
-            </div>
+            {deliveryEnabled && (
+              <>
+                <div className="pmodal-ditem">
+                  <Truck size={16} className="pmodal-dicon" />
+                  <div>
+                    <p className="pmodal-dlabel">Entrega a domicilio</p>
+                    <p className="pmodal-dval">$50 (1–6 km) · $80 (6–10 km)</p>
+                  </div>
+                </div>
+                <div className="pmodal-ditem">
+                  <Clock size={16} className="pmodal-dicon" />
+                  <div>
+                    <p className="pmodal-dlabel">Horario nocturno</p>
+                    <p className="pmodal-dval">Después de 8 PM $100</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Payment Methods */}
@@ -215,7 +220,9 @@ export default function ProductModal({ product, onClose }) {
             <p className="pmodal-pay-title">Métodos de pago</p>
             <div className="pmodal-pay-methods">
               <span className="pmodal-pay-method">💳 Mercado Pago</span>
-              <span className="pmodal-pay-method">💵 Efectivo al recibir <span className="pmodal-pay-note">(envío $80 · depósito $50)</span></span>
+              {deliveryEnabled && (
+                <span className="pmodal-pay-method">💵 Efectivo al recibir <span className="pmodal-pay-note">(envío $80 · depósito $50)</span></span>
+              )}
               <span className="pmodal-pay-method">🏪 Efectivo en recolección <span className="pmodal-pay-note">(listo en 15–30 min)</span></span>
             </div>
           </div>

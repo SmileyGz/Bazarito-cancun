@@ -261,6 +261,7 @@ export default function ProductLandingPage() {
   const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
   const ph = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', emoji: '📦' };
   const isAvailable = product.status !== 'sold' && product.status !== 'out_of_stock';
+  const deliveryEnabled = product.delivery_enabled !== false;
 
   return (
     <div>
@@ -330,7 +331,7 @@ export default function ProductLandingPage() {
             
             <div className="plp-trust">
               <span>🛡️ Compra segura con MercadoPago</span>
-              <span>🚚 Recolección gratis · Entrega disponible en Cancún</span>
+              <span>{deliveryEnabled ? '🚚 Recolección gratis · Entrega disponible en Cancún' : '📦 Solo recolección en tienda (Región 96)'}</span>
               <span>✅ Negocio local verificado · Región 96</span>
             </div>
           </div>
