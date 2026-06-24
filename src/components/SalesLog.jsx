@@ -145,10 +145,10 @@ export default function SalesLog({ onDelete }) {
                       {sale.quantity > 1 && (
                         <span className="slog-meta-tag">×{sale.quantity} uds</span>
                       )}
-                      {sale.notes && (
-                        <span className="slog-meta-tag slog-notes" title={sale.notes}>📝 {sale.notes}</span>
-                      )}
                     </div>
+                    {sale.notes && (
+                      <div className="slog-notes">📝 {sale.notes}</div>
+                    )}
                   </div>
 
                   {/* Financials */}
@@ -250,7 +250,12 @@ export default function SalesLog({ onDelete }) {
           background: #E8F4F3; border-radius: var(--radius-full);
           padding: 2px 8px;
         }
-        .slog-notes { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .slog-notes {
+          font-size: 0.75rem; color: var(--text-muted);
+          background: var(--bg-muted); padding: 6px 10px;
+          border-radius: var(--radius-sm); margin-top: 4px;
+          line-height: 1.3;
+        }
 
         .slog-financials {
           display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0;

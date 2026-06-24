@@ -195,7 +195,7 @@ export async function getSales() {
     .select(`
       id, quantity, unit_price, unit_cost,
       product_id,
-      orders!inner(id, business_id, created_at, source, pay_method),
+      orders!inner(id, business_id, created_at, source, pay_method, notes),
       products(name, type, categories(slug))
     `)
     .eq('orders.business_id', bizId)
@@ -220,7 +220,7 @@ export async function getSales() {
     margin: Math.round(((item.unit_price - item.unit_cost) / item.unit_cost) * 100) || 0,
     saleDate: item.orders.created_at,
     delivery: item.orders.source || 'pickup',
-    notes: ''
+    notes: item.orders.notes || ''
   }));
 }
 
