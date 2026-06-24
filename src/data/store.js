@@ -119,10 +119,11 @@ export async function addProduct(product) {
   if (error) throw error;
 
   if (product.type === PRODUCT_TYPES.STOCK) {
-    await supabase.from('inventory').insert([{
+    const { error: invErr } = await supabase.from('inventory').insert([{
       product_id: prod.id,
       quantity: product.stock || 0
     }]);
+    if (invErr) throw new Error('Error al guardar inventario: ' + invErr.message);
   }
 
   return prod;
@@ -165,11 +166,10 @@ export async function updateProduct(id, updates) {
   const currentType = prod.custom_attributes?.ui_type || PRODUCT_TYPES.STOCK;
 
   if (updates.stock !== undefined && currentType === PRODUCT_TYPES.STOCK) {
-    // If inventory doesn't exist, this update will quietly fail or we might need an upsert
-    // But since stock is only for stock products, and inventory is created in addProduct, it should be fine.
-    await supabase
+    const { error: invError } = await supabase
       .from('inventory')
       .upsert({ product_id: id, quantity: updates.stock }, { onConflict: 'product_id' });
+    if (invError) throw new Error('Error al guardar stock: ' + invError.message);
   }
 
   return prod;
