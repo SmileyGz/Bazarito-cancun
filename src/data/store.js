@@ -169,8 +169,7 @@ export async function updateProduct(id, updates) {
     // But since stock is only for stock products, and inventory is created in addProduct, it should be fine.
     await supabase
       .from('inventory')
-      .update({ quantity: updates.stock })
-      .eq('product_id', id);
+      .upsert({ product_id: id, quantity: updates.stock }, { onConflict: 'product_id' });
   }
 
   return prod;
