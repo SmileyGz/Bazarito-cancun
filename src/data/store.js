@@ -68,24 +68,27 @@ export async function getProducts() {
     return [];
   }
 
-  return data.map(p => ({
-    id: p.id,
-    sku: p.sku || '',
-    name: p.name,
-    description: p.description,
-    category: p.categories?.slug || 'hogar',
-    type: p.custom_attributes?.ui_type || (p.inventory ? PRODUCT_TYPES.STOCK : PRODUCT_TYPES.ONE_OFF),
-    cost: p.cost,
-    price: p.price,
-    status: p.status,
-    stock: p.inventory?.quantity || 0,
-    supplier: p.suppliers?.name || '',
-    images: p.images || [],
-    variants: p.custom_attributes?.variants || [],
-    marketing_ads: p.custom_attributes?.marketing_ads || [],
-    delivery_enabled: p.custom_attributes?.delivery_enabled !== false, // default true
-    createdAt: p.created_at
-  }));
+  return data.map(p => {
+    const type = p.custom_attributes?.ui_type || (p.inventory ? PRODUCT_TYPES.STOCK : PRODUCT_TYPES.ONE_OFF);
+    return {
+      id: p.id,
+      sku: p.sku || '',
+      name: p.name,
+      description: p.description,
+      category: p.categories?.slug || 'hogar',
+      type: type,
+      cost: p.cost,
+      price: p.price,
+      status: p.status,
+      stock: type === PRODUCT_TYPES.ONE_OFF ? 1 : (p.inventory?.quantity || 0),
+      supplier: p.suppliers?.name || '',
+      images: p.images || [],
+      variants: p.custom_attributes?.variants || [],
+      marketing_ads: p.custom_attributes?.marketing_ads || [],
+      delivery_enabled: p.custom_attributes?.delivery_enabled !== false, // default true
+      createdAt: p.created_at
+    };
+  });
 }
 
 export async function addProduct(product) {

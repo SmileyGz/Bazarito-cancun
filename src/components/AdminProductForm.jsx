@@ -287,8 +287,8 @@ export default function AdminProductForm({ product, onSave, onClose }) {
           <div className="apf-row">
             <div className="input-group">
               <label>Stock / Cantidad</label>
-              <input className="input" type="number" min="0" value={form.stock}
-                onChange={e => set('stock', e.target.value)} />
+              <input className="input" type="number" min="0" value={form.type === PRODUCT_TYPES.ONE_OFF ? 1 : form.stock}
+                onChange={e => set('stock', e.target.value)} disabled={form.type === PRODUCT_TYPES.ONE_OFF} />
             </div>
             <div className="input-group">
               <label>Estado</label>
