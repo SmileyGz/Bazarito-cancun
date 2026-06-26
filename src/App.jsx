@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import CatalogPage from './pages/CatalogPage';
 import AdminPage from './pages/AdminPage';
 import ProductLandingPage from './pages/ProductLandingPage';
+import CompressPage from './pages/CompressPage';
 
 /**
  * SPA Route Change Tracker
@@ -49,6 +50,7 @@ export default function App() {
       <Routes>
         <Route path="/"      element={<CatalogLayout />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/compress" element={<CompressPage />} />
         <Route path="/p/:id" element={<ProductLandingPage />} />
       </Routes>
     </BrowserRouter>
