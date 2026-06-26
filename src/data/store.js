@@ -101,6 +101,47 @@ export async function getProducts() {
   });
 }
 
+export async function getPublicProducts() {
+  const bizId = await getBusinessId();
+  if (!bizId) return [];
+
+  const { data, error } = await supabase
+    .from('products')
+    .select(`
+      id, name, description, sku, type, price, custom_attributes, created_at, images,
+      inventory (quantity),
+      categories (slug)
+    `)
+    .eq('business_id', bizId)
+    .eq('status', STATUSES.AVAILABLE)
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    console.error('getPublicProducts error:', error);
+    return [];
+  }
+
+  return data.map(p => {
+    const type = p.custom_attributes?.ui_type || (p.inventory ? PRODUCT_TYPES.STOCK : PRODUCT_TYPES.ONE_OFF);
+    return {
+      id: p.id,
+      sku: p.sku || '',
+      name: p.name,
+      description: p.description,
+      category: p.categories?.slug || 'hogar',
+      type: type,
+      price: p.price,
+      status: STATUSES.AVAILABLE,
+      stock: type === PRODUCT_TYPES.ONE_OFF ? 1 : (p.inventory?.quantity || 0),
+      images: p.images || [],
+      image: p.images?.[0] || null,
+      variants: p.custom_attributes?.variants || [],
+      delivery_enabled: p.custom_attributes?.delivery_enabled !== false, // default true
+      createdAt: p.created_at
+    };
+  });
+}
+
 export async function addProduct(product) {
   const bizId = await getBusinessId();
   const categoryId = await getCategoryId(product.category);
@@ -300,7 +341,18 @@ export async function recordSale({
   } else {
     const currentStock = prod.inventory?.quantity || 0;
     const newStock = Math.max(0, currentStock - quantity);
-    await supabase.from('inventory').update({ quantity: newStock }).eq('product_id', prod.id);
+    
+    const { data: updatedInv } = await supabase
+      .from('inventory')
+      .update({ quantity: newStock })
+      .eq('product_id', prod.id)
+      .eq('quantity', currentStock)
+      .select();
+
+    if (!updatedInv || updatedInv.length === 0) {
+      throw new Error("El inventario fue modificado mientras procesabas la venta. Recarga e intenta de nuevo.");
+    }
+
     if (newStock === 0) {
       await supabase.from('products').update({ status: STATUSES.OUT_OF_STOCK }).eq('id', prod.id);
     }

@@ -3,7 +3,7 @@ import HeroSection from '../components/HeroSection';
 import CategoryFilter from '../components/CategoryFilter';
 import ProductGrid from '../components/ProductGrid';
 import ProductModal from '../components/ProductModal';
-import { getProducts } from '../data/store';
+import { getPublicProducts } from '../data/store';
 
 export default function CatalogPage() {
   const [products, setProducts]     = useState([]);
@@ -12,7 +12,7 @@ export default function CatalogPage() {
 
   useEffect(() => {
     async function load() {
-      setProducts(await getProducts());
+      setProducts(await getPublicProducts());
     }
     load();
   }, []);
@@ -24,7 +24,7 @@ export default function CatalogPage() {
       if (document.visibilityState === 'visible') {
         const now = Date.now();
         if (now - lastFetch > 30000) {
-          setProducts(await getProducts());
+          setProducts(await getPublicProducts());
           lastFetch = now;
         }
       }
@@ -33,11 +33,9 @@ export default function CatalogPage() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
-  // Only show available products in public view — hide sold/archived
-  const available = products.filter(p => p.status === 'active');
   const filtered = activeCategory === 'all'
-    ? available
-    : available.filter(p => p.category === activeCategory);
+    ? products
+    : products.filter(p => p.category === activeCategory);
 
   return (
     <>

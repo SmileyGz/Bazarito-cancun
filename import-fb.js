@@ -10,7 +10,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 async function importProducts() {
   console.log('Fetching products from Facebook Catalog...');
   try {
-    const res = await fetch(`https://graph.facebook.com/v18.0/${FB_CATALOG_ID}/products?access_token=${FB_ACCESS_TOKEN}&fields=name,description,price,image_url,availability,retailer_id`);
+    const res = await fetch(`https://graph.facebook.com/v18.0/${FB_CATALOG_ID}/products?access_token=${FB_ACCESS_TOKEN}&fields=name,description,price,image_url,availability,retailer_id,id`);
     const json = await res.json();
     
     if (json.error) {
@@ -32,71 +32,106 @@ async function importProducts() {
     if (!catList || catList.length === 0) throw new Error("No categories found to assign products to.");
     const cat = catList[0];
 
-    // Fetch existing product names to avoid N+1 check queries
+    // Fetch existing products to map by name (since we didn't have FB IDs before)
     const { data: existingData, error: existingErr } = await supabase
       .from('products')
-      .select('name')
+      .select('id, name, status, custom_attributes')
       .eq('business_id', biz.id);
       
     if (existingErr) throw existingErr;
-    const existingNames = new Set(existingData.map(p => p.name));
+    const existingMap = new Map();
+    existingData.forEach(p => existingMap.set(p.name, p));
 
+    const fbNamesSeen = new Set();
+    let updatedCount = 0;
     const productsToInsert = [];
     const itemAvailabilityMap = new Map();
 
     for (const item of items) {
-      if (existingNames.has(item.name)) {
-        // Only log sporadically if there are too many to avoid noise
-        continue;
-      }
-
-      console.log(`Preparing to import: ${item.name}`);
+      fbNamesSeen.add(item.name);
       const priceVal = item.price ? parseFloat(item.price.replace(/[^0-9.]/g, '')) : 0;
-      
-      productsToInsert.push({
-        business_id: biz.id,
-        category_id: cat.id,
-        name: item.name,
-        description: item.description || '',
-        price: priceVal,
-        cost: priceVal * 0.5, // estimate
-        images: item.image_url ? [item.image_url] : [],
-        status: item.availability === 'in stock' ? 'active' : 'draft',
-        custom_attributes: { ui_type: 'stock', delivery_enabled: true }
-      });
-      
-      itemAvailabilityMap.set(item.name, item.availability === 'in stock' ? 10 : 0);
+      const statusVal = item.availability === 'in stock' ? 'active' : 'draft';
+      const quantityVal = item.availability === 'in stock' ? 10 : 0;
+      const fbId = item.id;
+
+      if (existingMap.has(item.name)) {
+        // Update existing product
+        const existing = existingMap.get(item.name);
+        
+        // Merge custom_attributes
+        const newCustom = { ...(existing.custom_attributes || {}), fb_id: fbId };
+
+        await supabase.from('products').update({
+          price: priceVal,
+          description: item.description || '',
+          status: statusVal,
+          custom_attributes: newCustom
+        }).eq('id', existing.id);
+
+        // Update inventory logic: only replenish if Facebook says in-stock and we were out
+        // (This prevents overwriting local sales deductions arbitrarily)
+        if (statusVal === 'active') {
+          // just ensure there is an inventory record, maybe bump to 10 if 0
+          const { data: invData } = await supabase.from('inventory').select('quantity').eq('product_id', existing.id).single();
+          if (invData && invData.quantity === 0) {
+            await supabase.from('inventory').update({ quantity: 10 }).eq('product_id', existing.id);
+          } else if (!invData) {
+            await supabase.from('inventory').insert([{ product_id: existing.id, quantity: 10 }]);
+          }
+        } else {
+          // If FB says out of stock, force 0
+          await supabase.from('inventory').update({ quantity: 0 }).eq('product_id', existing.id);
+        }
+
+        updatedCount++;
+      } else {
+        // Insert new
+        productsToInsert.push({
+          business_id: biz.id,
+          category_id: cat.id,
+          name: item.name,
+          description: item.description || '',
+          price: priceVal,
+          cost: priceVal * 0.5,
+          images: item.image_url ? [item.image_url] : [],
+          status: statusVal,
+          custom_attributes: { ui_type: 'stock', delivery_enabled: true, fb_id: fbId }
+        });
+        
+        itemAvailabilityMap.set(item.name, quantityVal);
+      }
     }
 
-    if (productsToInsert.length === 0) {
-      console.log('No new products to import.');
-      return;
+    if (productsToInsert.length > 0) {
+      console.log(`Bulk inserting ${productsToInsert.length} new products...`);
+      const { data: insertedProducts, error: insertErr } = await supabase
+        .from('products')
+        .insert(productsToInsert)
+        .select();
+
+      if (insertErr) throw insertErr;
+
+      const inventoryToInsert = insertedProducts.map(prod => ({
+        product_id: prod.id,
+        quantity: itemAvailabilityMap.get(prod.name) || 0
+      }));
+
+      if (inventoryToInsert.length > 0) {
+        await supabase.from('inventory').insert(inventoryToInsert);
+      }
+      console.log(`✅ Inserted ${productsToInsert.length} new products.`);
     }
 
-    // Bulk Insert Products
-    console.log(`Bulk inserting ${productsToInsert.length} new products...`);
-    const { data: insertedProducts, error: insertErr } = await supabase
-      .from('products')
-      .insert(productsToInsert)
-      .select();
-
-    if (insertErr) {
-      throw insertErr;
+    // Purge Stale Items (Items in DB but not in FB feed anymore)
+    let archivedCount = 0;
+    for (const [name, p] of existingMap.entries()) {
+      if (!fbNamesSeen.has(name) && p.status !== 'archived') {
+        await supabase.from('products').update({ status: 'archived' }).eq('id', p.id);
+        archivedCount++;
+      }
     }
 
-    // Bulk Insert Inventory
-    const inventoryToInsert = insertedProducts.map(prod => ({
-      product_id: prod.id,
-      quantity: itemAvailabilityMap.get(prod.name) || 0
-    }));
-
-    if (inventoryToInsert.length > 0) {
-      console.log(`Bulk inserting inventory for ${inventoryToInsert.length} products...`);
-      const { error: invErr } = await supabase.from('inventory').insert(inventoryToInsert);
-      if (invErr) throw invErr;
-    }
-
-    console.log(`✅ Successfully imported ${insertedProducts.length} new products into Bazarito!`);
+    console.log(`✅ Synchronization complete. Updated: ${updatedCount}. Inserted: ${productsToInsert.length}. Archived (Stale): ${archivedCount}.`);
 
   } catch (error) {
     console.error('Script error:', error);

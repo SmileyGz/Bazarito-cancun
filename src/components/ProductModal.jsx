@@ -236,7 +236,7 @@ export default function ProductModal({ product, onClose }) {
               onClick={() => setShowCheckout(true)}
             >
               <ShoppingBag size={20} />
-              {quantity > 1 ? `Pedir ${quantity} piezas` : 'Pedir este producto'}
+              {quantity > 1 ? `Pedir ${quantity} piezas` : 'Pedir Ahora - Paga al Recibir'}
             </button>
           )}
         </div>
