@@ -21,7 +21,7 @@ async function compressImage(file) {
     const options = {
       maxSizeMB: 1,
       maxWidthOrHeight: 1000,
-      useWebWorker: true,
+      useWebWorker: false, // Fix GH pages worker path issues
       fileType: 'image/webp', // WebP yields much smaller base64 strings
     };
     const compressedBlob = await imageCompression(file, options);
@@ -76,6 +76,7 @@ export default function AdminProductForm({ product, onSave, onClose }) {
       setForm(prev => ({ ...prev, images: [...(prev.images || []), ...compressed] }));
     } catch (err) {
       console.error('Image error', err);
+      window.alert('Error al procesar la imagen. Intenta con otra foto.');
     }
     setUploading(false);
   }
