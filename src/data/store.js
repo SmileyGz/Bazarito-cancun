@@ -64,7 +64,7 @@ export async function getProducts() {
   const { data, error } = await supabase
     .from('products')
     .select(`
-      id, business_id, category_id, supplier_id, name, description, sku, type, status, price, cost, custom_attributes, created_at, updated_at,
+      *,
       inventory (quantity),
       categories (slug),
       suppliers (name)
