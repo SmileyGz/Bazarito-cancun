@@ -82,6 +82,7 @@ export async function getProducts() {
       stock: type === PRODUCT_TYPES.ONE_OFF ? 1 : (p.inventory?.quantity || 0),
       supplier: p.suppliers?.name || '',
       images: p.images || [],
+      image: p.images?.[0] || null,
       variants: p.custom_attributes?.variants || [],
       marketing_ads: p.custom_attributes?.marketing_ads || [],
       delivery_enabled: p.custom_attributes?.delivery_enabled !== false, // default true

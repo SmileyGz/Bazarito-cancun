@@ -109,8 +109,8 @@ export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
                   <td className="itbl-td itbl-name-cell">
                     <div className="itbl-product">
                       <div className="itbl-thumb" style={{ background: isSold ? '#f0e8cc' : 'var(--bg-muted)' }}>
-                        {p.image
-                          ? <img src={p.image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => e.target.style.display='none'} />
+                        {(p.images?.[0] || p.image)
+                          ? <img src={p.images?.[0] || p.image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => e.target.style.display='none'} />
                           : <span style={{ fontSize:'1.2rem' }}>{cat?.emoji || '📦'}</span>
                         }
                       </div>
