@@ -112,7 +112,7 @@ export default function HeroSection() {
           <br />
           <span className="title-orange">increíbles a precios locales</span>
           <br />
-          <span className="title-sub">con entrega rápida en Cancún</span>
+          <span className="title-sub">Con entrega rápida en Cancún</span>
         </h1>
 
         {/* Sub */}
@@ -250,7 +250,7 @@ export default function HeroSection() {
         .title-orange { color: var(--orange); }
         .title-sub {
           color: var(--text-secondary); font-size: 0.62em;
-          font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+          font-weight: 700; letter-spacing: 0.07em;
         }
         .hero-sub {
           font-size: 1.05rem; color: var(--text-secondary);

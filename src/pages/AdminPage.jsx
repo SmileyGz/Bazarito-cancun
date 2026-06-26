@@ -65,8 +65,9 @@ export default function AdminPage() {
 
   const reload = useCallback(() => {
     async function doReload() {
-      setProducts(await getProducts());
-      setStats(await getStats());
+      const fetchedProducts = await getProducts();
+      setProducts(fetchedProducts);
+      setStats(await getStats(fetchedProducts));
       setRefresh(r => r + 1);
     }
     doReload();

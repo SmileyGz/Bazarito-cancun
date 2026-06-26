@@ -27,24 +27,33 @@ async function importProducts() {
     const { data: biz } = await supabase.from('businesses').select('id').eq('slug', 'bazarito').single();
     if (!biz) throw new Error('Business not found');
 
-    // Get default category and supplier
+    // Get default category
     let { data: catList } = await supabase.from('categories').select('id').eq('business_id', biz.id).limit(1);
     if (!catList || catList.length === 0) throw new Error("No categories found to assign products to.");
     const cat = catList[0];
 
-    let insertedCount = 0;
+    // Fetch existing product names to avoid N+1 check queries
+    const { data: existingData, error: existingErr } = await supabase
+      .from('products')
+      .select('name')
+      .eq('business_id', biz.id);
+      
+    if (existingErr) throw existingErr;
+    const existingNames = new Set(existingData.map(p => p.name));
+
+    const productsToInsert = [];
+    const itemAvailabilityMap = new Map();
+
     for (const item of items) {
-      // Check if product already exists
-      const { data: existing } = await supabase.from('products').select('id').eq('name', item.name).eq('business_id', biz.id).single();
-      if (existing) {
-        console.log(`Skipping ${item.name} (already exists)`);
+      if (existingNames.has(item.name)) {
+        // Only log sporadically if there are too many to avoid noise
         continue;
       }
 
-      console.log(`Importing: ${item.name}`);
+      console.log(`Preparing to import: ${item.name}`);
       const priceVal = item.price ? parseFloat(item.price.replace(/[^0-9.]/g, '')) : 0;
       
-      const { data: prod, error: err } = await supabase.from('products').insert([{
+      productsToInsert.push({
         business_id: biz.id,
         category_id: cat.id,
         name: item.name,
@@ -54,23 +63,40 @@ async function importProducts() {
         images: item.image_url ? [item.image_url] : [],
         status: item.availability === 'in stock' ? 'active' : 'draft',
         custom_attributes: { ui_type: 'stock', delivery_enabled: true }
-      }]).select().single();
-
-      if (err) {
-        console.error('Error inserting product:', err.message);
-        continue;
-      }
-
-      // Add inventory
-      await supabase.from('inventory').insert([{
-        product_id: prod.id,
-        quantity: item.availability === 'in stock' ? 10 : 0
-      }]);
+      });
       
-      insertedCount++;
+      itemAvailabilityMap.set(item.name, item.availability === 'in stock' ? 10 : 0);
     }
 
-    console.log(`✅ Successfully imported ${insertedCount} new products into Bazarito!`);
+    if (productsToInsert.length === 0) {
+      console.log('No new products to import.');
+      return;
+    }
+
+    // Bulk Insert Products
+    console.log(`Bulk inserting ${productsToInsert.length} new products...`);
+    const { data: insertedProducts, error: insertErr } = await supabase
+      .from('products')
+      .insert(productsToInsert)
+      .select();
+
+    if (insertErr) {
+      throw insertErr;
+    }
+
+    // Bulk Insert Inventory
+    const inventoryToInsert = insertedProducts.map(prod => ({
+      product_id: prod.id,
+      quantity: itemAvailabilityMap.get(prod.name) || 0
+    }));
+
+    if (inventoryToInsert.length > 0) {
+      console.log(`Bulk inserting inventory for ${inventoryToInsert.length} products...`);
+      const { error: invErr } = await supabase.from('inventory').insert(inventoryToInsert);
+      if (invErr) throw invErr;
+    }
+
+    console.log(`✅ Successfully imported ${insertedProducts.length} new products into Bazarito!`);
 
   } catch (error) {
     console.error('Script error:', error);

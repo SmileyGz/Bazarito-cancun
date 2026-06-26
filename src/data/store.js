@@ -22,12 +22,11 @@ export const DELIVERY_METHODS = {
   DELIVERY: 'delivery',
 };
 
-let BAZARITO_ID = null;
+let BAZARITO_ID_PROMISE = null;
 async function getBusinessId() {
-  if (BAZARITO_ID) return BAZARITO_ID;
-  const { data } = await supabase.from('businesses').select('id').eq('slug', 'bazarito').single();
-  if (data) BAZARITO_ID = data.id;
-  return BAZARITO_ID;
+  if (BAZARITO_ID_PROMISE) return BAZARITO_ID_PROMISE;
+  BAZARITO_ID_PROMISE = supabase.from('businesses').select('id').eq('slug', 'bazarito').single().then(({ data }) => data ? data.id : null);
+  return BAZARITO_ID_PROMISE;
 }
 
 async function getCategoryId(slug) {
@@ -328,8 +327,10 @@ export async function getSalesForMonth(year, month) {
   });
 }
 
-export async function getStats() {
-  const products = await getProducts();
+export async function getStats(products = null) {
+  if (!products) {
+    products = await getProducts();
+  }
   const sales    = await getSales();
   const active   = products.filter(p => p.status === STATUSES.AVAILABLE);
   const sold     = products.filter(p => p.status === STATUSES.SOLD);

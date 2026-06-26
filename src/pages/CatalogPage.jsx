@@ -17,11 +17,16 @@ export default function CatalogPage() {
     load();
   }, []);
 
-  // Re-load on visibility (when admin makes changes)
+  // Re-load on visibility (when admin makes changes), with 30s cooldown
   useEffect(() => {
+    let lastFetch = Date.now();
     async function onVisible() {
       if (document.visibilityState === 'visible') {
-        setProducts(await getProducts());
+        const now = Date.now();
+        if (now - lastFetch > 30000) {
+          setProducts(await getProducts());
+          lastFetch = now;
+        }
       }
     }
     document.addEventListener('visibilitychange', onVisible);
