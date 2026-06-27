@@ -22,8 +22,11 @@ export const DELIVERY_METHODS = {
   DELIVERY: 'delivery',
 };
 
+let BAZARITO_ID_PROMISE = null;
 export async function getBusinessId() {
-  return import.meta.env.VITE_BAZARITO_BUSINESS_ID;
+  if (BAZARITO_ID_PROMISE) return BAZARITO_ID_PROMISE;
+  BAZARITO_ID_PROMISE = supabase.from('businesses').select('id').eq('slug', 'bazarito').single().then(({ data }) => data ? data.id : null);
+  return BAZARITO_ID_PROMISE;
 }
 
 async function getCategoryId(slug) {
