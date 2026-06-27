@@ -241,38 +241,69 @@ export async function getSales() {
   if (salesCache && Date.now() - salesCacheTime < 60_000) return salesCache;
 
   const bizId = await getBusinessId();
-  const { data, error } = await supabase
-    .from('order_items')
-    .select(`
-      id, quantity, unit_price, unit_cost,
-      product_id,
-      orders!inner(id, business_id, created_at, source, pay_method, notes),
-      products(name, type, categories(slug))
-    `)
-    .eq('orders.business_id', bizId)
-    .order('orders(created_at)', { ascending: false });
+  
+  // 1. Fetch orders
+  const { data: ordersData, error: ordersErr } = await supabase
+    .from('orders')
+    .select('id, business_id, created_at, source, pay_method, notes')
+    .eq('business_id', bizId)
+    .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error(error);
+  if (ordersErr) {
+    console.error('Error fetching orders for sales:', ordersErr);
     return [];
   }
+  
+  if (!ordersData || ordersData.length === 0) {
+    salesCache = [];
+    salesCacheTime = Date.now();
+    return salesCache;
+  }
+  
+  const orderIds = ordersData.map(o => o.id);
+  
+  // 2. Fetch order items for those orders
+  const { data: itemsData, error: itemsErr } = await supabase
+    .from('order_items')
+    .select(`
+      id, quantity, unit_price, unit_cost, product_id, order_id,
+      products(name, type, categories(slug))
+    `)
+    .in('order_id', orderIds);
+    
+  if (itemsErr) {
+    console.error('Error fetching order items:', itemsErr);
+    return [];
+  }
+  
+  // Create map of orders for quick lookup
+  const ordersMap = new Map();
+  ordersData.forEach(o => ordersMap.set(o.id, o));
 
-  salesCache = data.map(item => ({
-    id: item.id,
-    orderId: item.orders.id,
-    productId: item.product_id,
-    productName: item.products?.name,
-    category: item.products?.categories?.slug || 'hogar',
-    type: item.products?.type,
-    cost: item.unit_cost,
-    salePrice: item.unit_price,
-    quantity: item.quantity,
-    profit: (item.unit_price - item.unit_cost) * item.quantity,
-    margin: Math.round(((item.unit_price - item.unit_cost) / item.unit_cost) * 100) || 0,
-    saleDate: item.orders.created_at,
-    delivery: item.orders.source || 'pickup',
-    notes: item.orders.notes || ''
-  }));
+  // 3. Map to final structure
+  salesCache = itemsData.map(item => {
+    const order = ordersMap.get(item.order_id);
+    return {
+      id: item.id,
+      orderId: order.id,
+      productId: item.product_id,
+      productName: item.products?.name,
+      category: item.products?.categories?.slug || 'hogar',
+      type: item.products?.type,
+      cost: item.unit_cost,
+      salePrice: item.unit_price,
+      quantity: item.quantity,
+      profit: (item.unit_price - item.unit_cost) * item.quantity,
+      margin: Math.round(((item.unit_price - item.unit_cost) / item.unit_cost) * 100) || 0,
+      saleDate: order.created_at,
+      delivery: order.source || 'pickup',
+      notes: order.notes || ''
+    };
+  });
+  
+  // Sort salesCache to match order date since itemsData might be out of order
+  salesCache.sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate));
+  
   salesCacheTime = Date.now();
   
   return salesCache;
