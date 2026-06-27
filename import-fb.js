@@ -32,10 +32,10 @@ async function importProducts() {
     if (!catList || catList.length === 0) throw new Error("No categories found to assign products to.");
     const cat = catList[0];
 
-    // Fetch existing products to map by name (since we didn't have FB IDs before)
+    // Fetch existing products and their inventory to map by name
     const { data: existingData, error: existingErr } = await supabase
       .from('products')
-      .select('id, name, status, custom_attributes')
+      .select('*, inventory(quantity)')
       .eq('business_id', biz.id);
       
     if (existingErr) throw existingErr;
@@ -45,6 +45,8 @@ async function importProducts() {
     const fbNamesSeen = new Set();
     let updatedCount = 0;
     const productsToInsert = [];
+    const productsToUpdate = [];
+    const inventoryToUpsert = [];
     const itemAvailabilityMap = new Map();
 
     for (const item of items) {
@@ -61,26 +63,26 @@ async function importProducts() {
         // Merge custom_attributes
         const newCustom = { ...(existing.custom_attributes || {}), fb_id: fbId };
 
-        await supabase.from('products').update({
+        // We prepare the full row for upsert to avoid overwriting missing columns
+        // We delete joined tables from the object before upsert
+        const { inventory, ...existingRow } = existing;
+        
+        productsToUpdate.push({
+          ...existingRow,
           price: priceVal,
           description: item.description || '',
           status: statusVal,
           custom_attributes: newCustom
-        }).eq('id', existing.id);
+        });
 
-        // Update inventory logic: only replenish if Facebook says in-stock and we were out
-        // (This prevents overwriting local sales deductions arbitrarily)
+        // Update inventory logic
         if (statusVal === 'active') {
-          // just ensure there is an inventory record, maybe bump to 10 if 0
-          const { data: invData } = await supabase.from('inventory').select('quantity').eq('product_id', existing.id).single();
-          if (invData && invData.quantity === 0) {
-            await supabase.from('inventory').update({ quantity: 10 }).eq('product_id', existing.id);
-          } else if (!invData) {
-            await supabase.from('inventory').insert([{ product_id: existing.id, quantity: 10 }]);
+          const invQty = inventory && inventory.length > 0 ? inventory[0].quantity : (inventory?.quantity ?? 0);
+          if (invQty === 0 || !inventory) {
+            inventoryToUpsert.push({ product_id: existing.id, quantity: 10 });
           }
         } else {
-          // If FB says out of stock, force 0
-          await supabase.from('inventory').update({ quantity: 0 }).eq('product_id', existing.id);
+          inventoryToUpsert.push({ product_id: existing.id, quantity: 0 });
         }
 
         updatedCount++;
@@ -98,8 +100,14 @@ async function importProducts() {
           custom_attributes: { ui_type: 'stock', delivery_enabled: true, fb_id: fbId }
         });
         
+        // We'll insert inventory for new products after we get their IDs
         itemAvailabilityMap.set(item.name, quantityVal);
       }
+    }
+
+    if (productsToUpdate.length > 0) {
+      console.log(`Bulk updating ${productsToUpdate.length} existing products...`);
+      await supabase.from('products').upsert(productsToUpdate);
     }
 
     if (productsToInsert.length > 0) {
@@ -111,24 +119,33 @@ async function importProducts() {
 
       if (insertErr) throw insertErr;
 
-      const inventoryToInsert = insertedProducts.map(prod => ({
+      const newInventoryToInsert = insertedProducts.map(prod => ({
         product_id: prod.id,
         quantity: itemAvailabilityMap.get(prod.name) || 0
       }));
+      inventoryToUpsert.push(...newInventoryToInsert);
 
-      if (inventoryToInsert.length > 0) {
-        await supabase.from('inventory').insert(inventoryToInsert);
-      }
       console.log(`✅ Inserted ${productsToInsert.length} new products.`);
+    }
+
+    if (inventoryToUpsert.length > 0) {
+      console.log(`Bulk updating inventory for ${inventoryToUpsert.length} products...`);
+      await supabase.from('inventory').upsert(inventoryToUpsert, { onConflict: 'product_id' });
     }
 
     // Purge Stale Items (Items in DB but not in FB feed anymore)
     let archivedCount = 0;
+    const productsToArchive = [];
     for (const [name, p] of existingMap.entries()) {
       if (!fbNamesSeen.has(name) && p.status !== 'archived') {
-        await supabase.from('products').update({ status: 'archived' }).eq('id', p.id);
+        const { inventory, ...existingRow } = p;
+        productsToArchive.push({ ...existingRow, status: 'archived' });
         archivedCount++;
       }
+    }
+    if (productsToArchive.length > 0) {
+      console.log(`Bulk archiving ${productsToArchive.length} stale products...`);
+      await supabase.from('products').upsert(productsToArchive);
     }
 
     console.log(`✅ Synchronization complete. Updated: ${updatedCount}. Inserted: ${productsToInsert.length}. Archived (Stale): ${archivedCount}.`);

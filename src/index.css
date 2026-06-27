@@ -547,3 +547,13 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); font-weight: 800; line-hei
   .pcard-cta  { padding: 9px 12px; }
   .pcard-price { font-size: 1rem; }
 }
+
+/* Urgency Pulse */
+.urgency-pulse {
+  animation: pulseUrg 1.5s infinite;
+}
+@keyframes pulseUrg {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}

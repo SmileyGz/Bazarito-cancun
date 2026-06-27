@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   DollarSign, TrendingUp, TrendingDown, Wallet, Plus, Trash2, Edit2, Search, 
-  ChevronLeft, ChevronRight, X, Sparkles, PieChart, Landmark 
+  ChevronLeft, ChevronRight, X, Sparkles, PieChart, Landmark, ShoppingBag, Award
 } from 'lucide-react';
 import { 
   getFinanceTransactions, addFinanceTransaction, updateFinanceTransaction, deleteFinanceTransaction,
-  getFinancePortfolio, addFinancePortfolioAsset, updateFinancePortfolioAsset, deleteFinancePortfolioAsset 
+  getFinancePortfolio, addFinancePortfolioAsset, updateFinancePortfolioAsset, deleteFinancePortfolioAsset,
+  getMonthlySummary, getTopProducts, getCategoryBreakdown, CATEGORIES 
 } from '../data/store';
 
 // Standard business categories list
@@ -32,7 +33,7 @@ const PORTFOLIO_CATEGORIES = [
   'Cuentas por Pagar (Pasivo)'
 ];
 
-export default function FinancePanel() {
+export default function BusinessInsightsPanel() {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [portfolio, setPortfolio] = useState([]);
@@ -68,16 +69,24 @@ export default function FinancePanel() {
   // Chart hover state
   const [hoveredMonth, setHoveredMonth] = useState(null);
 
+  const [topProducts, setTopProducts] = useState([]);
+  const [breakdown, setBreakdown] = useState({});
+
   // Load initial data
   const loadData = async () => {
     setLoading(true);
     try {
       const txs = await getFinanceTransactions();
       const port = await getFinancePortfolio();
+      const top = await getTopProducts(5);
+      const breakd = await getCategoryBreakdown();
+      
       setTransactions(txs);
       setPortfolio(port);
+      setTopProducts(top);
+      setBreakdown(breakd);
     } catch (err) {
-      console.error('Error loading finance data:', err);
+      console.error('Error loading data:', err);
     } finally {
       setLoading(false);
     }
@@ -392,104 +401,69 @@ export default function FinancePanel() {
             </div>
           </div>
 
-          {/* 3. Cashflow Chart (SVG rendering) */}
-          <div className="glass-panel chart-card">
-            <div className="chart-header">
-              <div>
-                <h3>Análisis de Flujo de Caja</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Comparativa mensual de ingresos vs gastos</p>
-              </div>
-              {hoveredMonth !== null && (
-                <div className="chart-tooltip-indicator">
-                  <strong>{monthlyData.labels[hoveredMonth]}: </strong>
-                  <span className="text-green">+{formatMXN(monthlyData.income[hoveredMonth])}</span>
-                  {' / '}
-                  <span className="text-red">-{formatMXN(monthlyData.expense[hoveredMonth])}</span>
+          {/* FILA 2: Salud Financiera (2 Columnas) */}
+          <div className="ins-grid-2col">
+            {/* Izquierda: Cashflow Chart */}
+            <div className="glass-panel chart-card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="chart-header">
+                <div>
+                  <h3>Análisis de Flujo de Caja</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Comparativa mensual de ingresos vs gastos</p>
                 </div>
-              )}
+                {hoveredMonth !== null && (
+                  <div className="chart-tooltip-indicator">
+                    <strong>{monthlyData.labels[hoveredMonth]}: </strong>
+                    <span className="text-green">+{formatMXN(monthlyData.income[hoveredMonth])}</span>
+                    {' / '}
+                    <span className="text-red">-{formatMXN(monthlyData.expense[hoveredMonth])}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="chart-wrapper-svg" style={{ flex: 1 }}>
+                <svg width="100%" height="220" viewBox="0 0 1000 240" preserveAspectRatio="none">
+                  {/* Horizontal gridlines */}
+                  {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                    const y = 20 + ratio * 180;
+                    const labelVal = monthlyData.maxVal * (1 - ratio);
+                    return (
+                      <g key={idx}>
+                        <line x1="60" y1={y} x2="980" y2={y} stroke="rgba(0,104,71,0.08)" strokeWidth="1" />
+                        <text x="5" y={y + 4} fill="var(--text-muted)" fontSize="11" fontFamily="Inter">
+                          {formatMXN(labelVal).split('.')[0]}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Bars */}
+                  {monthlyData.labels.map((label, idx) => {
+                    const xBase = 80 + idx * 75;
+                    const incHeight = (monthlyData.income[idx] / monthlyData.maxVal) * 180;
+                    const expHeight = (monthlyData.expense[idx] / monthlyData.maxVal) * 180;
+                    const incY = 200 - incHeight;
+                    const expY = 200 - expHeight;
+
+                    return (
+                      <g key={idx} onMouseEnter={() => setHoveredMonth(idx)} onMouseLeave={() => setHoveredMonth(null)} style={{ cursor: 'pointer' }}>
+                        <rect x={xBase} y={incY} width="24" height={Math.max(incHeight, 1)} rx="4" fill="url(#greenGrad)" opacity={hoveredMonth === null || hoveredMonth === idx ? 0.95 : 0.4} style={{ transition: 'all 0.2s' }} />
+                        <rect x={xBase + 28} y={expY} width="24" height={Math.max(expHeight, 1)} rx="4" fill="url(#redGrad)" opacity={hoveredMonth === null || hoveredMonth === idx ? 0.95 : 0.4} style={{ transition: 'all 0.2s' }} />
+                        <text x={xBase + 14} y="222" fill="var(--text-muted)" fontSize="12" textAnchor="middle" fontWeight="bold">{label}</text>
+                      </g>
+                    );
+                  })}
+
+                  <defs>
+                    <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#00c885" /><stop offset="100%" stopColor="#006847" /></linearGradient>
+                    <linearGradient id="redGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ff5252" /><stop offset="100%" stopColor="#c2185b" /></linearGradient>
+                  </defs>
+                </svg>
+              </div>
             </div>
 
-            <div className="chart-wrapper-svg">
-              <svg width="100%" height="220" viewBox="0 0 1000 240" preserveAspectRatio="none">
-                {/* Horizontal gridlines */}
-                {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                  const y = 20 + ratio * 180;
-                  const labelVal = monthlyData.maxVal * (1 - ratio);
-                  return (
-                    <g key={idx}>
-                      <line x1="60" y1={y} x2="980" y2={y} stroke="rgba(0,104,71,0.08)" strokeWidth="1" />
-                      <text x="5" y={y + 4} fill="var(--text-muted)" fontSize="11" fontFamily="Inter">
-                        {formatMXN(labelVal).split('.')[0]}
-                      </text>
-                    </g>
-                  );
-                })}
-
-                {/* Bars */}
-                {monthlyData.labels.map((label, idx) => {
-                  const xBase = 80 + idx * 75;
-                  const incHeight = (monthlyData.income[idx] / monthlyData.maxVal) * 180;
-                  const expHeight = (monthlyData.expense[idx] / monthlyData.maxVal) * 180;
-
-                  // coordinates
-                  const incY = 200 - incHeight;
-                  const expY = 200 - expHeight;
-
-                  return (
-                    <g 
-                      key={idx} 
-                      onMouseEnter={() => setHoveredMonth(idx)} 
-                      onMouseLeave={() => setHoveredMonth(null)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {/* Income Bar (Green) */}
-                      <rect 
-                        x={xBase} 
-                        y={incY} 
-                        width="24" 
-                        height={Math.max(incHeight, 1)} 
-                        rx="4" 
-                        fill="url(#greenGrad)"
-                        opacity={hoveredMonth === null || hoveredMonth === idx ? 0.95 : 0.4}
-                        style={{ transition: 'all 0.2s' }}
-                      />
-                      {/* Expense Bar (Red) */}
-                      <rect 
-                        x={xBase + 28} 
-                        y={expY} 
-                        width="24" 
-                        height={Math.max(expHeight, 1)} 
-                        rx="4" 
-                        fill="url(#redGrad)"
-                        opacity={hoveredMonth === null || hoveredMonth === idx ? 0.95 : 0.4}
-                        style={{ transition: 'all 0.2s' }}
-                      />
-                      {/* Label */}
-                      <text x={xBase + 14} y="222" fill="var(--text-muted)" fontSize="12" textAnchor="middle" fontWeight="bold">
-                        {label}
-                      </text>
-                    </g>
-                  );
-                })}
-
-                {/* Definitions for gradients */}
-                <defs>
-                  <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00c885" />
-                    <stop offset="100%" stopColor="#006847" />
-                  </linearGradient>
-                  <linearGradient id="redGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ff5252" />
-                    <stop offset="100%" stopColor="#c2185b" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-          </div>
-
-          {/* 4. Portfolio Grid */}
-          <div className="portfolio-section">
-            <div className="section-title-bar">
+            {/* Derecha: Portfolio */}
+            <div className="portfolio-section glass-panel" style={{ padding: 20 }}>
+              <div className="section-title-bar" style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Landmark size={20} style={{ color: '#C8973A' }} />
                 <h3>Distribución de Portfolio</h3>
@@ -549,8 +523,58 @@ export default function FinancePanel() {
               )}
             </div>
           </div>
+          </div>
 
-          {/* 5. Transactions Table */}
+          {/* FILA 3: Inteligencia Comercial */}
+          <div className="ins-grid-2col">
+            {/* Izquierda: Productos más rentables */}
+            <div className="ins-card glass-panel" style={{ padding: 20 }}>
+              <div className="ins-card-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Award size={20} style={{ color: 'var(--teal)' }} />
+                  <h3>Productos más rentables</h3>
+                </div>
+                <span className="ins-card-sub">por ganancia total acumulada</span>
+              </div>
+              <div className="ins-top-list">
+                {topProducts.length === 0 && (
+                  <p style={{ color:'var(--text-muted)', fontSize:'0.85rem' }}>No hay ventas registradas aún</p>
+                )}
+                {topProducts.map((p, i) => {
+                  const cat = CATEGORIES.find(c => c.id === p.category);
+                  const maxProfit = topProducts[0]?.profit || 1;
+                  return (
+                    <div key={i} className="ins-top-item">
+                      <div className="ins-rank">{i + 1}</div>
+                      <div className="ins-top-info">
+                        <div className="ins-top-name">{cat?.emoji} {p.name}</div>
+                        <div className="ins-top-bar-track">
+                          <div className="ins-top-bar-fill" style={{ width: `${(p.profit / maxProfit) * 100}%` }} />
+                        </div>
+                      </div>
+                      <div className="ins-top-stats">
+                        <span className="ins-top-profit">${p.profit.toLocaleString('es-MX')}</span>
+                        <span className="ins-top-units">{p.units} uds</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Derecha: Ventas por Categoría */}
+            <div className="ins-card glass-panel" style={{ padding: 20 }}>
+              <div className="ins-card-header" style={{ marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ShoppingBag size={20} style={{ color: 'var(--orange)' }} />
+                  <h3>Ventas por Categoría</h3>
+                </div>
+              </div>
+              <CategoryDonut breakdown={breakdown} />
+            </div>
+          </div>
+
+          {/* Fila 4: Transactions Table */}
           <div className="glass-panel table-container">
             <div className="table-search-bar">
               <h3>Transacciones Recientes</h3>
@@ -933,7 +957,98 @@ export default function FinancePanel() {
           .table-search-bar { flex-direction: column; align-items: stretch; }
           .search-input-wrapper { width: 100%; }
         }
+
+        /* Insights CSS */
+        .ins-grid-2col {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+        .ins-card-header {
+          display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px;
+          flex-wrap: wrap;
+        }
+        .ins-card-sub { font-size: 0.78rem; color: var(--text-muted); }
+        .donut-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .donut-svg { flex-shrink: 0; }
+        .donut-legend { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 120px; }
+        .donut-leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; }
+        .donut-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .donut-leg-label { flex: 1; color: var(--text-secondary); }
+        .donut-leg-pct { font-weight: 700; color: var(--text-primary); }
+
+        .ins-top-list { display: flex; flex-direction: column; gap: 12px; }
+        .ins-top-item { display: flex; align-items: center; gap: 12px; }
+        .ins-rank {
+          width: 28px; height: 28px; flex-shrink: 0;
+          background: var(--yellow); color: var(--black);
+          border-radius: var(--radius-sm);
+          display: flex; align-items: center; justify-content: center;
+          font-family: var(--font-display); font-weight: 900; font-size: 0.85rem;
+        }
+        .ins-top-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .ins-top-name { font-size: 0.875rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ins-top-bar-track { height: 6px; background: var(--border); border-radius: var(--radius-full); overflow: hidden; }
+        .ins-top-bar-fill { height: 100%; background: var(--teal); border-radius: var(--radius-full); transition: width 0.6s var(--ease-smooth); }
+        .ins-top-stats { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+        .ins-top-profit { font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; color: var(--teal-dark); }
+        .ins-top-units  { font-size: 0.72rem; color: var(--text-muted); }
+        
+        @media (max-width: 900px) {
+          .ins-grid-2col { grid-template-columns: 1fr; }
+        }
       `}</style>
+    </div>
+  );
+}
+
+// ─── Donut-style category pie (CSS only) ───────
+function CategoryDonut({ breakdown }) {
+  const cats   = CATEGORIES.filter(c => c.id !== 'all');
+  const colors = ['#1A7A6D','#E84B09','#FFD000','#2E7D32','#7B1FA2','#1565C0','#E65100','#C62828'];
+  const total  = Object.values(breakdown).reduce((s,v) => s + v.revenue, 0);
+
+  if (total === 0) return <p style={{ color:'var(--text-muted)', fontSize:'0.85rem' }}>Sin ventas aún</p>;
+
+  let offset = 0;
+  const segments = cats
+    .filter(c => breakdown[c.id]?.revenue > 0)
+    .map((c, i) => {
+      const pct = (breakdown[c.id].revenue / total) * 100;
+      const seg = { cat: c, pct, offset, color: colors[i % colors.length] };
+      offset += pct;
+      return seg;
+    });
+
+  const circumference = 2 * Math.PI * 40;
+
+  return (
+    <div className="donut-wrap">
+      <svg width="120" height="120" viewBox="0 0 100 100" className="donut-svg">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="var(--border)" strokeWidth="18" />
+        {segments.map((s, i) => (
+          <circle key={i} cx="50" cy="50" r="40" fill="none"
+            stroke={s.color} strokeWidth="18"
+            strokeDasharray={`${(s.pct / 100) * circumference} ${circumference}`}
+            strokeDashoffset={-((s.offset / 100) * circumference)}
+            transform="rotate(-90 50 50)"
+            style={{ transition: 'all 0.5s ease' }}
+          />
+        ))}
+        <text x="50" y="55" textAnchor="middle"
+          style={{ fontSize:10, fontFamily:'var(--font-display)', fontWeight:800, fill:'var(--text-primary)' }}>
+          {segments.length}
+        </text>
+      </svg>
+      <div className="donut-legend">
+        {segments.map((s, i) => (
+          <div key={i} className="donut-leg-item">
+            <span className="donut-dot" style={{ background: s.color }} />
+            <span className="donut-leg-label">{s.cat.emoji} {s.cat.label}</span>
+            <span className="donut-leg-pct">{Math.round(s.pct)}%</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

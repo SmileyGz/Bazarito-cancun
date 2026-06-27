@@ -9,10 +9,13 @@ export default function CatalogPage() {
   const [products, setProducts]     = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
+      setIsLoading(true);
       setProducts(await getPublicProducts());
+      setIsLoading(false);
     }
     load();
   }, []);
@@ -24,6 +27,7 @@ export default function CatalogPage() {
       if (document.visibilityState === 'visible') {
         const now = Date.now();
         if (now - lastFetch > 30000) {
+          // Don't show skeleton on background refresh to avoid flashing
           setProducts(await getPublicProducts());
           lastFetch = now;
         }
@@ -52,7 +56,7 @@ export default function CatalogPage() {
           <span className="catalog-hint">Toca cualquier producto para ver detalles 👆</span>
         </div>
 
-        <ProductGrid products={filtered} onProductClick={setSelectedProduct} />
+        <ProductGrid products={filtered} onProductClick={setSelectedProduct} isLoading={isLoading} />
       </main>
 
       {/* Footer */}

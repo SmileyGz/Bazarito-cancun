@@ -34,20 +34,17 @@ function buildPickupSlots() {
 }
 const PICKUP_SLOTS = buildPickupSlots();
 
-const STEPS = { INFO: 'info', PICKUP_TIME: 'pickup_time', PAYMENT: 'payment', DONE: 'done' };
-
 // ── Edge Function URL ───────────────────────────────────────────────────────
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-preference`;
 
 export default function CheckoutModal({ product, onClose, quantity = 1 }) {
-  const [step, setStep]             = useState(STEPS.INFO);
-
   React.useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
   }, []);
+  
   const [deliveryType, setDelivery] = useState('pickup');   // 'pickup' | 'delivery'
   const [zone, setZone]             = useState('short');
   const [name, setName]             = useState('');
@@ -61,17 +58,6 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
   const deliveryEnabled = product.delivery_enabled !== false;
   const selectedZone    = ZONES.find(z => z.id === zone);
   const deliveryFee     = selectedZone?.fee || 50;
-
-  // ── Step 1 → Step 2 ──────────────────────────────────────────────────────
-  function goToPayment(e) {
-    e.preventDefault();
-    if (!name.trim() || !phone.trim()) return;
-    if (deliveryType === 'pickup') {
-      setStep(STEPS.PICKUP_TIME);
-    } else {
-      setStep(STEPS.PAYMENT);
-    }
-  }
 
   // ── Create preference with MP ─────────────────────────────────────────────
   async function createPreference(type) {
@@ -116,6 +102,11 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
   const productTotal = product.price * quantity;
   const totalFull    = productTotal + (deliveryType === 'delivery' ? deliveryFee : 0);
 
+  // Form validity
+  const isContactValid = name.trim().length >= 2 && phone.trim().length >= 8;
+  const isDeliveryValid = deliveryType === 'delivery' ? !!zone : !!pickupTime;
+  const isReadyToPay = isContactValid && isDeliveryValid;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box co-modal" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} onClick={e => e.stopPropagation()}>
@@ -130,239 +121,9 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
           </button>
         </div>
 
-        {/* ── STEP 1: Client Info ── */}
-        {step === STEPS.INFO && (
-          <form className="co-body" onSubmit={goToPayment}>
-            <div className="co-section-title">Tus datos de contacto</div>
-
-            <div className="input-group">
-              <label>Nombre completo *</label>
-              <input
-                id="co-name"
-                className="input"
-                required
-                placeholder="Ej: Juan García"
-                value={name}
-                onChange={e => setName(e.target.value)}
-              />
-            </div>
-
-            <div className="input-group">
-              <label>WhatsApp / Teléfono *</label>
-              <input
-                id="co-phone"
-                className="input"
-                required
-                type="tel"
-                placeholder="Ej: 998 123 4567"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-              />
-            </div>
-
-            {/* Delivery type */}
-            <div className="co-section-title" style={{ marginTop: 4 }}>¿Cómo quieres recibirlo?</div>
-            <div className="co-delivery-opts">
-              <button
-                type="button"
-                id="co-opt-pickup"
-                className={`co-delivery-opt ${deliveryType === 'pickup' ? 'co-delivery-opt-active' : ''}`}
-                onClick={() => setDelivery('pickup')}
-              >
-                <MapPin size={20} />
-                <span>Recolección</span>
-                <small>Región 96, Cancún · Gratis</small>
-              </button>
-
-              {deliveryEnabled && (
-                <button
-                  type="button"
-                  id="co-opt-delivery"
-                  className={`co-delivery-opt ${deliveryType === 'delivery' ? 'co-delivery-opt-active' : ''}`}
-                  onClick={() => setDelivery('delivery')}
-                >
-                  <Truck size={20} />
-                  <span>Envío a domicilio</span>
-                  <small>Desde $50 MXN</small>
-                </button>
-              )}
-            </div>
-
-            {/* Zone selector — only if delivery */}
-            {deliveryType === 'delivery' && (
-              <div className="co-zones">
-                <div className="co-section-title">Selecciona tu zona</div>
-                {ZONES.map(z => (
-                  <button
-                    key={z.id}
-                    type="button"
-                    id={`co-zone-${z.id}`}
-                    className={`co-zone-opt ${zone === z.id ? 'co-zone-opt-active' : ''}`}
-                    onClick={() => setZone(z.id)}
-                  >
-                    <span className="co-zone-icon">{z.icon}</span>
-                    <span className="co-zone-label">{z.label}</span>
-                    <span className="co-zone-fee">${z.fee} MXN</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button id="co-next-btn" type="submit" className="btn btn-teal" style={{ width: '100%', marginTop: 8 }}>
-              Continuar →
-            </button>
-          </form>
-        )}
-
-        {/* ── STEP 1.5: Pickup time selector ── */}
-        {step === STEPS.PICKUP_TIME && (
-          <div className="co-body">
-            <div className="co-recap">
-              <p className="co-recap-name">{product.name}</p>
-              <p className="co-recap-sub">📍 Recolección en Región 96, Cancún</p>
-            </div>
-
-            <div className="co-section-title">
-              <Clock size={14} style={{ display: 'inline', marginRight: 4 }} />
-              ¿A qué hora pasas a recoger?
-            </div>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: -8 }}>
-              Horario de atención: 9:00 AM – 6:00 PM
-            </p>
-
-            <div className="co-select-wrapper">
-              <select
-                id="co-pickup-time-select"
-                className="co-select"
-                value={pickupTime}
-                onChange={(e) => setPickupTime(e.target.value)}
-                aria-label="Selecciona un horario de recogida"
-              >
-                <option value="">-- Elige un horario --</option>
-                {PICKUP_SLOTS.map(slot => (
-                  <option key={slot.value} value={slot.value}>
-                    {slot.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="co-info-box">
-              <p>📍 <strong>Dirección:</strong> Región 96, Cancún</p>
-              <p style={{ marginTop: 6 }}>📞 Te enviaremos nuestra ubicación exacta y teléfono por <strong>WhatsApp</strong> al confirmar tu pedido.</p>
-              <p style={{ marginTop: 6 }}>💵 Total a pagar: <strong>${productTotal.toLocaleString('es-MX')} MXN{quantity > 1 ? ` (${quantity} × $${product.price.toLocaleString('es-MX')})` : ''} — pagas en efectivo al recoger.</strong></p>
-            </div>
-
-            <button
-              id="co-pickup-confirm-btn"
-              className="btn btn-teal"
-              style={{ width: '100%' }}
-              disabled={!pickupTime}
-              onClick={() => {
-                // Build a pre-filled WhatsApp message to business
-                const BAZARITO_WA = '529543388332';
-                const msg = encodeURIComponent(
-                  `🛒 ¡Hola Bazarito! Quiero apartar el producto:\n"${product.name}"${quantity > 1 ? ` x${quantity}` : ''} ($${productTotal.toLocaleString('es-MX')} MXN)\n\n👤 Nombre: ${name.trim()}\n📱 Teléfono: ${phone.trim()}\n⏰ Hora de recogida: ${pickupTime}\n\n¿Me puedes confirmar la dirección exacta? ¡Gracias!`
-                );
-                window.open(`https://wa.me/${BAZARITO_WA}?text=${msg}`, '_blank');
-                onClose();
-              }}
-            >
-              ✅ Confirmar recogida a las {pickupTime || '—'}
-            </button>
-            <button
-              type="button"
-              className="co-back-link"
-              onClick={() => { setStep(STEPS.INFO); }}
-            >
-              ← Cambiar datos
-            </button>
-          </div>
-        )}
-
-        {/* ── STEP 2: Payment selection ── */}
-        {step === STEPS.PAYMENT && !prefId && (
-          <div className="co-body">
-            <div className="co-recap">
-              <p className="co-recap-name">{product.name}</p>
-              <p className="co-recap-sub">
-                {`🚚 Envío ${selectedZone?.label} · $${deliveryFee} MXN`}
-              </p>
-            </div>
-
-            {/* ── Delivery: 2 CTAs ── */}
-            <>
-              <div className="co-section-title" style={{ marginTop: 4 }}>Elige cómo pagar</div>
-
-              {error && <div className="co-error">⚠️ {error}</div>}
-
-              {/* CTA 1 — Deposit only */}
-              <div className="co-pay-card">
-                <div className="co-pay-card-header">
-                  <ShieldCheck size={20} className="co-pay-icon-green" />
-                  <div>
-                    <p className="co-pay-card-title">Reserva tu envío — ${deliveryFee} MXN</p>
-                    <p className="co-pay-card-sub">Paga ahora solo el costo de envío por Mercado Pago</p>
-                  </div>
-                </div>
-                <div className="co-pay-terms">
-                  ✅ <strong>Paga el resto en efectivo</strong> de forma segura, directo a tu repartidor al recibir tu pedido (${productTotal.toLocaleString('es-MX')} MXN{quantity > 1 ? ` · ${quantity} piezas` : ''}).
-                </div>
-                <button
-                  id="co-pay-deposit-btn"
-                  className="btn btn-teal"
-                  style={{ width: '100%', marginTop: 10 }}
-                  disabled={loading}
-                  onClick={() => createPreference('deposit')}
-                >
-                  {loading && paymentType === 'deposit'
-                    ? 'Preparando pago...'
-                    : `🔒 Pagar anticipo de envío · $${deliveryFee} MXN`}
-                </button>
-              </div>
-
-              {/* CTA 2 — Full payment */}
-              <div className="co-pay-card co-pay-card-alt">
-                <div className="co-pay-card-header">
-                  <CreditCard size={20} className="co-pay-icon-blue" />
-                  <div>
-                    <p className="co-pay-card-title">Pago total — ${totalFull.toLocaleString('es-MX')} MXN</p>
-                    <p className="co-pay-card-sub">Producto + envío, todo por Mercado Pago</p>
-                  </div>
-                </div>
-                <div className="co-pay-breakdown">
-                  <span>Producto{quantity > 1 ? ` × ${quantity}` : ''}</span><span>${productTotal.toLocaleString('es-MX')}</span>
-                  <span>Envío ({selectedZone?.label})</span><span>+ ${deliveryFee}</span>
-                  <span className="co-pay-total-label">Total</span><span className="co-pay-total-val">${totalFull.toLocaleString('es-MX')}</span>
-                </div>
-                <p className="co-pay-terms">✅ Al recibirlo no necesitas efectivo. Todo está cubierto.</p>
-                <button
-                  id="co-pay-full-btn"
-                  className="btn btn-blue"
-                  style={{ width: '100%', marginTop: 10 }}
-                  disabled={loading}
-                  onClick={() => createPreference('full')}
-                >
-                  {loading && paymentType === 'full'
-                    ? 'Preparando pago...'
-                    : `💳 Pagar todo · $${totalFull.toLocaleString('es-MX')} MXN`}
-                </button>
-              </div>
-            </>
-
-            <button
-              type="button"
-              className="co-back-link"
-              onClick={() => { setStep(STEPS.INFO); setPrefId(null); setError(''); }}
-            >
-              ← Cambiar datos
-            </button>
-          </div>
-        )}
-
         {/* ── MP Wallet rendered after preference created ── */}
-        {step === STEPS.PAYMENT && prefId && (
-          <div className="co-body">
+        {prefId ? (
+          <div className="co-body animate-fade-in">
             <div className="co-recap">
               <p className="co-recap-name">{product.name}</p>
               <p className="co-recap-sub">
@@ -386,8 +147,197 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
               className="co-back-link"
               onClick={() => { setPrefId(null); setError(''); setPaymentType(null); }}
             >
-              ← Volver
+              ← Volver a opciones de pago
             </button>
+          </div>
+        ) : (
+          <div className="co-body animate-fade-in">
+            {/* 1. Contacto */}
+            <div className="co-section-title">1. ¿A quién le entregamos?</div>
+            <div className="input-group">
+              <input
+                id="co-name"
+                className="input"
+                required
+                placeholder="Nombre completo (Ej: Juan García)"
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+            </div>
+            <div className="input-group">
+              <input
+                id="co-phone"
+                className="input"
+                required
+                type="tel"
+                placeholder="WhatsApp / Teléfono (Ej: 998 123 4567)"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+              />
+            </div>
+
+            {/* 2. Método de entrega */}
+            {deliveryEnabled && (
+              <>
+                <div className="co-section-title" style={{ marginTop: 12 }}>2. ¿Cómo lo quieres recibir?</div>
+                <div className="co-delivery-opts">
+                  <button
+                    type="button"
+                    id="co-opt-pickup"
+                    className={`co-delivery-opt ${deliveryType === 'pickup' ? 'co-delivery-opt-active' : ''}`}
+                    onClick={() => setDelivery('pickup')}
+                  >
+                    <MapPin size={20} />
+                    <span>Recolección</span>
+                    <small>Región 96, Cancún</small>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="co-opt-delivery"
+                    className={`co-delivery-opt ${deliveryType === 'delivery' ? 'co-delivery-opt-active' : ''}`}
+                    onClick={() => setDelivery('delivery')}
+                  >
+                    <Truck size={20} />
+                    <span>Envío a domicilio</span>
+                    <small>Desde $50 MXN</small>
+                  </button>
+                </div>
+              </>
+            )}
+
+            {!deliveryEnabled && (
+              <div className="co-info-box" style={{ marginTop: 12 }}>
+                <p>📍 Este producto solo está disponible para <strong>recolección en tienda</strong> (Región 96, Cancún).</p>
+              </div>
+            )}
+
+            {/* 2b. Opciones específicas */}
+            {deliveryType === 'delivery' ? (
+              <div className="co-zones animate-fade-in">
+                <div className="co-section-title">Selecciona tu zona de envío</div>
+                {ZONES.map(z => (
+                  <button
+                    key={z.id}
+                    type="button"
+                    id={`co-zone-${z.id}`}
+                    className={`co-zone-opt ${zone === z.id ? 'co-zone-opt-active' : ''}`}
+                    onClick={() => setZone(z.id)}
+                  >
+                    <span className="co-zone-icon">{z.icon}</span>
+                    <span className="co-zone-label">{z.label}</span>
+                    <span className="co-zone-fee">+ ${z.fee} MXN</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="animate-fade-in">
+                <div className="co-section-title" style={{ marginTop: 8 }}>¿A qué hora pasas a recoger?</div>
+                <div className="co-select-wrapper">
+                  <select
+                    id="co-pickup-time-select"
+                    className="co-select"
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                    aria-label="Selecciona un horario de recogida"
+                  >
+                    <option value="">-- Elige un horario (9 AM - 6 PM) --</option>
+                    {PICKUP_SLOTS.map(slot => (
+                      <option key={slot.value} value={slot.value}>
+                        {slot.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Pagos (Aparece cuando 1 y 2 están listos) */}
+            <div className={`co-payment-section ${isReadyToPay ? 'ready' : 'locked'}`}>
+              <div className="co-section-title" style={{ marginTop: 12 }}>3. ¿Cómo prefieres pagar?</div>
+              
+              {!isReadyToPay && (
+                <div className="co-locked-msg">
+                  Completa tus datos y opciones de entrega arriba para ver los métodos de pago.
+                </div>
+              )}
+
+              {isReadyToPay && error && <div className="co-error">⚠️ {error}</div>}
+
+              {isReadyToPay && deliveryType === 'pickup' && (
+                <div className="animate-fade-in">
+                  <div className="co-info-box" style={{ marginBottom: 12 }}>
+                    <p>📍 <strong>Dirección:</strong> Región 96, Cancún</p>
+                    <p style={{ marginTop: 6 }}>📞 Te enviaremos nuestra ubicación exacta y teléfono por <strong>WhatsApp</strong> al confirmar tu pedido.</p>
+                  </div>
+                  <button
+                    id="co-pickup-confirm-btn"
+                    className="btn btn-teal"
+                    style={{ width: '100%', padding: '14px 20px', fontSize: '1rem' }}
+                    disabled={!pickupTime}
+                    onClick={() => {
+                      const BAZARITO_WA = '529543388332';
+                      const msg = encodeURIComponent(
+                        `🛒 ¡Hola Bazarito! Quiero apartar el producto:\n"${product.name}"${quantity > 1 ? ` x${quantity}` : ''} ($${productTotal.toLocaleString('es-MX')} MXN)\n\n👤 Nombre: ${name.trim()}\n📱 Teléfono: ${phone.trim()}\n⏰ Hora de recogida: ${pickupTime}\n\n¿Me puedes confirmar la dirección exacta? ¡Gracias!`
+                      );
+                      window.open(`https://wa.me/${BAZARITO_WA}?text=${msg}`, '_blank');
+                      onClose();
+                    }}
+                  >
+                    ✅ Pagar en efectivo al recoger (${productTotal.toLocaleString('es-MX')} MXN)
+                  </button>
+                </div>
+              )}
+
+              {isReadyToPay && deliveryType === 'delivery' && (
+                <div className="animate-fade-in">
+                  <div className="co-pay-card">
+                    <div className="co-pay-card-header">
+                      <ShieldCheck size={20} className="co-pay-icon-green" />
+                      <div>
+                        <p className="co-pay-card-title">Reserva tu envío — ${deliveryFee} MXN</p>
+                        <p className="co-pay-card-sub">Paga ahora solo el costo de envío por Mercado Pago</p>
+                      </div>
+                    </div>
+                    <div className="co-pay-terms">
+                      ✅ <strong>Paga el resto en efectivo</strong> directo a tu repartidor al recibir tu pedido (${productTotal.toLocaleString('es-MX')} MXN).
+                    </div>
+                    <button
+                      id="co-pay-deposit-btn"
+                      className="btn btn-teal"
+                      style={{ width: '100%', marginTop: 10 }}
+                      disabled={loading}
+                      onClick={() => createPreference('deposit')}
+                    >
+                      {loading && paymentType === 'deposit'
+                        ? 'Preparando pago...'
+                        : `🔒 Pagar anticipo de envío · $${deliveryFee} MXN`}
+                    </button>
+                  </div>
+
+                  <div className="co-pay-card co-pay-card-alt" style={{ marginTop: 12 }}>
+                    <div className="co-pay-card-header">
+                      <CreditCard size={20} className="co-pay-icon-blue" />
+                      <div>
+                        <p className="co-pay-card-title">Pago total — ${totalFull.toLocaleString('es-MX')} MXN</p>
+                        <p className="co-pay-card-sub">Producto + envío, todo por Mercado Pago</p>
+                      </div>
+                    </div>
+                    <button
+                      id="co-pay-full-btn"
+                      className="btn btn-blue"
+                      style={{ width: '100%', marginTop: 10 }}
+                      disabled={loading}
+                      onClick={() => createPreference('full')}
+                    >
+                      {loading && paymentType === 'full'
+                        ? 'Preparando pago...'
+                        : `💳 Pagar todo ahora · $${totalFull.toLocaleString('es-MX')} MXN`}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -421,9 +371,21 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
             display: flex; flex-direction: column; gap: 14px;
           }
           .co-section-title {
-            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.06em; color: var(--text-muted);
+            font-size: 0.8rem; font-weight: 800;
+            color: var(--text-primary);
           }
+          .co-payment-section {
+            transition: all 0.3s ease;
+          }
+          .co-payment-section.locked {
+            opacity: 0.5; pointer-events: none;
+          }
+          .co-locked-msg {
+            background: var(--bg-muted); border: 1.5px dashed var(--border);
+            padding: 12px; border-radius: var(--radius-md); font-size: 0.8rem;
+            color: var(--text-muted); text-align: center; margin-top: 8px;
+          }
+          
           /* Delivery options */
           .co-delivery-opts {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
@@ -445,7 +407,7 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
             background: #E8F4F3 !important; color: var(--teal-dark) !important;
           }
           /* Zone selector */
-          .co-zones { display: flex; flex-direction: column; gap: 8px; }
+          .co-zones { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
           .co-zone-opt {
             display: flex; align-items: center; gap: 10px;
             padding: 10px 14px;
@@ -468,12 +430,11 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
           .co-select {
             width: 100%;
             padding: 12px 16px;
-            font-size: 1rem;
-            font-family: var(--font-display);
-            font-weight: 700;
+            font-size: 0.95rem;
+            font-weight: 600;
             color: var(--text-primary);
             background: var(--bg-card);
-            border: 2.5px solid var(--border);
+            border: 2px solid var(--border);
             border-radius: var(--radius-md);
             cursor: pointer;
             outline: none;
@@ -556,8 +517,9 @@ export default function CheckoutModal({ product, onClose, quantity = 1 }) {
           .co-back-link {
             background: none; border: none; color: var(--text-muted);
             font-size: 0.82rem; font-weight: 600; cursor: pointer;
-            text-align: center; padding: 4px;
+            text-align: center; padding: 4px; margin-top: 12px;
             transition: color var(--dur-fast);
+            display: block; width: 100%;
           }
           .co-back-link:hover { color: var(--teal); }
         `}</style>

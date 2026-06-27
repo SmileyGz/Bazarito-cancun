@@ -7,4 +7,22 @@ export default defineConfig({
   // GitHub Pages deploys to: https://smileygz.github.io/Bazarito-cancun/
   // This ensures all asset paths (JS, CSS, images) resolve correctly.
   base: '/',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes('AdminPage') ||
+            id.includes('BusinessInsights') ||
+            id.includes('MarketingPanel') ||
+            id.includes('AdminProductForm') ||
+            id.includes('SaleModal') ||
+            id.includes('SalesLog')
+          ) {
+            return 'admin';
+          }
+        }
+      }
+    }
+  }
 })

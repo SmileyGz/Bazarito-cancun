@@ -180,7 +180,7 @@ export default function ProductModal({ product, onClose }) {
                   >+</button>
                 </div>
                 {product.stock != null && product.stock <= 5 && (
-                  <p style={{ fontSize:'0.7rem', color:'var(--orange)', fontWeight:700, marginTop:4 }}>⚡ Solo {product.stock} disponibles</p>
+                  <p className="urgency-badge" style={{ fontSize:'0.7rem', color:'var(--orange)', fontWeight:700, marginTop:4 }}>⚡ ÚLTIMAS PIEZAS ({product.stock})</p>
                 )}
               </div>
             )}
@@ -229,15 +229,23 @@ export default function ProductModal({ product, onClose }) {
 
           {/* CTA */}
           {!isSold && (
-            <button
-              id="pmodal-order-btn"
-              className="btn btn-teal"
-              style={{ width: '100%', justifyContent: 'center', padding: '14px 20px', fontSize: '1rem' }}
-              onClick={() => setShowCheckout(true)}
-            >
-              <ShoppingBag size={20} />
-              {quantity > 1 ? `Pedir ${quantity} piezas` : 'Pedir Ahora - Paga al Recibir'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button
+                id="pmodal-order-btn"
+                className="btn btn-teal"
+                style={{ width: '100%', justifyContent: 'center', padding: '14px 20px', fontSize: '1.05rem', fontWeight: 800 }}
+                onClick={() => setShowCheckout(true)}
+              >
+                <ShoppingBag size={20} />
+                {quantity > 1 ? `Reservar ${quantity} piezas` : '¡Lo quiero ahora!'}
+              </button>
+              
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 4 }}>
+                <span className="trust-badge">🛡️ Compra segura</span>
+                <span className="trust-badge">🤝 Paga al recibir</span>
+                <span className="trust-badge">✅ Entrega express</span>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -359,6 +367,25 @@ export default function ProductModal({ product, onClose }) {
         }
         .pmodal-pay-note {
           font-size: 0.78rem; color: var(--text-muted); font-weight: 400;
+        }
+        
+        .trust-badge {
+          font-size: 0.72rem;
+          color: var(--text-secondary);
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .urgency-badge {
+          animation: pulseUrg 1.5s infinite;
+        }
+
+        @keyframes pulseUrg {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.7; }
+          100% { transform: scale(1); opacity: 1; }
         }
       `}</style>
     </div>

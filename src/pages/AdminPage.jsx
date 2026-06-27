@@ -6,9 +6,8 @@ import StatsBar      from '../components/StatsBar';
 import InventoryTable from '../components/InventoryTable';
 import AdminProductForm from '../components/AdminProductForm';
 import SaleModal     from '../components/SaleModal';
-import InsightsPanel from '../components/InsightsPanel';
 import SalesLog      from '../components/SalesLog';
-import FinancePanel  from '../components/FinancePanel';
+import BusinessInsightsPanel  from '../components/BusinessInsightsPanel';
 import IntegrationsPanel from '../components/IntegrationsPanel';
 import MarketingPanel from '../components/MarketingPanel';
 import ReceiptModal from '../components/ReceiptModal';
@@ -45,8 +44,7 @@ const TABS = [
   { id: 'inventory', label: 'Inventario', icon: <Package size={17} /> },
   { id: 'sales',     label: 'Ventas',     icon: <ClipboardList size={17} /> },
   { id: 'marketing', label: 'FB Ads',  icon: <Megaphone size={17} /> },
-  { id: 'insights',  label: 'Insights',   icon: <TrendingUp size={17} /> },
-  { id: 'finance',   label: 'Finanzas',   icon: <DollarSign size={17} /> },
+  { id: 'insights',  label: 'Finanzas & Insights',   icon: <TrendingUp size={17} /> },
   { id: 'integrations', label: 'Integraciones', icon: <Globe size={17} /> },
 ];
 
@@ -233,19 +231,7 @@ export default function AdminPage() {
 
         {tab === 'insights' && (
           <div className="animate-fade-in">
-            <div className="admin-section-header">
-              <div>
-                <h2>Insights</h2>
-                <p>Análisis de ventas, márgenes y tendencias</p>
-              </div>
-            </div>
-            <InsightsPanel key={refresh} />
-          </div>
-        )}
-
-        {tab === 'finance' && (
-          <div className="animate-fade-in">
-            <FinancePanel />
+            <BusinessInsightsPanel key={refresh} />
           </div>
         )}
 

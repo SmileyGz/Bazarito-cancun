@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from '../lib/supabase';
 
 export const CATEGORIES = [
   { id: 'all',      label: 'Todo',           emoji: '📦' },
@@ -27,11 +22,8 @@ export const DELIVERY_METHODS = {
   DELIVERY: 'delivery',
 };
 
-let BAZARITO_ID_PROMISE = null;
-async function getBusinessId() {
-  if (BAZARITO_ID_PROMISE) return BAZARITO_ID_PROMISE;
-  BAZARITO_ID_PROMISE = supabase.from('businesses').select('id').eq('slug', 'bazarito').single().then(({ data }) => data ? data.id : null);
-  return BAZARITO_ID_PROMISE;
+export async function getBusinessId() {
+  return import.meta.env.VITE_BAZARITO_BUSINESS_ID;
 }
 
 async function getCategoryId(slug) {
@@ -239,7 +231,12 @@ export async function deleteProduct(id) {
 
 // ─── Sales CRUD ───────────────────────────────
 
+let salesCache = null;
+let salesCacheTime = 0;
+
 export async function getSales() {
+  if (salesCache && Date.now() - salesCacheTime < 60_000) return salesCache;
+
   const bizId = await getBusinessId();
   const { data, error } = await supabase
     .from('order_items')
@@ -257,7 +254,7 @@ export async function getSales() {
     return [];
   }
 
-  return data.map(item => ({
+  salesCache = data.map(item => ({
     id: item.id,
     orderId: item.orders.id,
     productId: item.product_id,
@@ -273,6 +270,9 @@ export async function getSales() {
     delivery: item.orders.source || 'pickup',
     notes: item.orders.notes || ''
   }));
+  salesCacheTime = Date.now();
+  
+  return salesCache;
 }
 
 export async function recordSale({
@@ -281,6 +281,10 @@ export async function recordSale({
   deliveryFee, deliveryFeeAmount,
   clientName, clientPhone, clientEmail
 }) {
+  // Invalidate sales cache
+  salesCache = null;
+  salesCacheTime = 0;
+
   const bizId = await getBusinessId();
 
   // 1. Get Product

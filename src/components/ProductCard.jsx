@@ -140,6 +140,11 @@ export default function ProductCard({ product, onClick }) {
               🔥 Más Vendido
             </span>
           )}
+          {product.stock != null && product.stock <= 5 && !isOneOff && (
+            <span className="badge badge-orange pcard-badge urgency-pulse" style={{ backgroundColor: '#FF5722' }}>
+              ⚡ Últimas {product.stock}
+            </span>
+          )}
         </div>
       </div>
 

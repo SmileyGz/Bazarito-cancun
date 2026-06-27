@@ -2,7 +2,24 @@ import React from 'react';
 import ProductCard from './ProductCard';
 import { Package } from 'lucide-react';
 
-export default function ProductGrid({ products, onProductClick }) {
+export default function ProductGrid({ products, onProductClick, isLoading }) {
+  if (isLoading) {
+    return (
+      <div className="pgrid">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="pcard pcard-skeleton">
+            <div className="pcard-img skeleton" style={{ borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0' }}></div>
+            <div className="pcard-body">
+              <div className="skeleton" style={{ width: '40%', height: '14px', marginBottom: '8px' }}></div>
+              <div className="skeleton" style={{ width: '80%', height: '20px', marginBottom: '16px' }}></div>
+              <div className="skeleton" style={{ width: '100%', height: '36px', borderRadius: 'var(--radius-full)' }}></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (products.length === 0) {
     return (
       <div className="grid-empty">
@@ -34,6 +51,12 @@ export default function ProductGrid({ products, onProductClick }) {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
           gap: 16px;
+        }
+        .pcard-skeleton {
+          pointer-events: none;
+        }
+        .pcard-skeleton .pcard-img {
+          height: 200px;
         }
         .grid-empty {
           text-align: center;
