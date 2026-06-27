@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
 
 const FB_CATALOG_ID = "2142999566151921";
 const FB_ACCESS_TOKEN = "EAAOFTaVf9YgBRkvgpU1ayo8KwS78XzDMiG3E194uK14YKtVczbK7B54e6tJY6dqeO6JwWUmJGhaUx1ZCZCjsUx72yeOpqAZApNs8G1J6cgwroZCZAtOs1cEw0F2IOSVLhpjaJp59E4qFaT3M10maTJ42MQMISmIRstdlG8J63WOgiZCZACRRiZC5gnXWf6jDsHG1asew17tlRyFZANkZCemZBmJ6Trw5OFJm46CugZDZD";
@@ -6,6 +7,24 @@ const SUPABASE_URL = "https://samwziooqhzohpszyddw.supabase.co";
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function downloadAndCompress(url) {
+  if (!url) return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const compressed = await sharp(buffer)
+      .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 60 })
+      .toBuffer();
+    return 'data:image/webp;base64,' + compressed.toString('base64');
+  } catch (err) {
+    console.error('Image compression error:', err.message);
+    return null;
+  }
+}
 
 async function importProducts() {
   console.log('Fetching products from Facebook Catalog...');
@@ -59,23 +78,25 @@ async function importProducts() {
       if (existingMap.has(item.name)) {
         // Update existing product
         const existing = existingMap.get(item.name);
-        
-        // Merge custom_attributes
         const newCustom = { ...(existing.custom_attributes || {}), fb_id: fbId };
-
-        // We prepare the full row for upsert to avoid overwriting missing columns
-        // We delete joined tables from the object before upsert
         const { inventory, ...existingRow } = existing;
+        
+        let newImageArray = existing.images || [];
+        // Only re-download if there is no image OR if it's an old uncompressed FB url
+        if (item.image_url && (!newImageArray[0] || newImageArray[0].includes('fbcdn.net'))) {
+           const b64 = await downloadAndCompress(item.image_url);
+           if (b64) newImageArray = [b64];
+        }
         
         productsToUpdate.push({
           ...existingRow,
           price: priceVal,
           description: item.description || '',
           status: statusVal,
+          images: newImageArray,
           custom_attributes: newCustom
         });
 
-        // Update inventory logic
         if (statusVal === 'active') {
           const invQty = inventory && inventory.length > 0 ? inventory[0].quantity : (inventory?.quantity ?? 0);
           if (invQty === 0 || !inventory) {
@@ -88,6 +109,7 @@ async function importProducts() {
         updatedCount++;
       } else {
         // Insert new
+        const b64 = await downloadAndCompress(item.image_url);
         productsToInsert.push({
           business_id: biz.id,
           category_id: cat.id,
@@ -95,12 +117,11 @@ async function importProducts() {
           description: item.description || '',
           price: priceVal,
           cost: priceVal * 0.5,
-          images: item.image_url ? [item.image_url] : [],
+          images: b64 ? [b64] : [],
           status: statusVal,
           custom_attributes: { ui_type: 'stock', delivery_enabled: true, fb_id: fbId }
         });
         
-        // We'll insert inventory for new products after we get their IDs
         itemAvailabilityMap.set(item.name, quantityVal);
       }
     }
@@ -124,7 +145,6 @@ async function importProducts() {
         quantity: itemAvailabilityMap.get(prod.name) || 0
       }));
       inventoryToUpsert.push(...newInventoryToInsert);
-
       console.log(`✅ Inserted ${productsToInsert.length} new products.`);
     }
 
@@ -133,7 +153,6 @@ async function importProducts() {
       await supabase.from('inventory').upsert(inventoryToUpsert, { onConflict: 'product_id' });
     }
 
-    // Purge Stale Items (Items in DB but not in FB feed anymore)
     let archivedCount = 0;
     const productsToArchive = [];
     for (const [name, p] of existingMap.entries()) {

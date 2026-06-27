@@ -47,16 +47,19 @@ export default function CatalogPage() {
       <CategoryFilter active={activeCategory} onChange={setActiveCategory} />
 
       <main className="container" style={{ paddingTop: 32, paddingBottom: 60 }}>
-        {/* Counts */}
-        <div className="catalog-meta">
-          <span className="catalog-count">
-            {filtered.length} producto{filtered.length !== 1 ? 's' : ''}
-            {activeCategory !== 'all' ? ' en esta categoría' : ' en total'}
-          </span>
-          <span className="catalog-hint">Toca cualquier producto para ver detalles 👆</span>
-        </div>
+        {!isLoading && (
+          <>
+            <div className="catalog-meta">
+              <span className="catalog-count">
+                {filtered.length} producto{filtered.length !== 1 ? 's' : ''}
+                {activeCategory !== 'all' ? ' en esta categoría' : ' en total'}
+              </span>
+              <span className="catalog-hint">Toca cualquier producto para ver detalles 👆</span>
+            </div>
 
-        <ProductGrid products={filtered} onProductClick={setSelectedProduct} isLoading={isLoading} />
+            <ProductGrid products={filtered} onProductClick={setSelectedProduct} />
+          </>
+        )}
       </main>
 
       {/* Footer */}
