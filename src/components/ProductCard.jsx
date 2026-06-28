@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Tag, Repeat, ChevronRight, Share2, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { STATUSES, PRODUCT_TYPES, CATEGORIES } from '../data/store';
@@ -14,10 +14,44 @@ const PLACEHOLDER_COLORS = {
   electronica:{ bg: 'linear-gradient(135deg,#F3E5F5,#E1BEE7)', emoji: '📱' },
   personal:   { bg: 'linear-gradient(135deg,#FFF0F5,#FFD6E7)', emoji: '👗' },
 };
+import { supabase } from '../lib/supabase';
 
 function ProductImage({ product }) {
+  const [src, setSrc] = useState(product.images?.[0] || product.image || null);
+  const [loading, setLoading] = useState(!src);
+  const ref = useRef(null);
   const ph = PLACEHOLDER_COLORS[product.category] || { bg: 'linear-gradient(135deg,#FFF8D6,#FFE89A)', emoji: '📦' };
-  const src = product.images?.[0] || product.image || null;
+
+  useEffect(() => {
+    if (src || !loading) return;
+    
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        let mounted = true;
+        async function loadImg() {
+          const { data } = await supabase.from('products').select('images').eq('id', product.id).single();
+          if (mounted) {
+             setSrc(data?.images?.[0] || null);
+             setLoading(false);
+          }
+        }
+        loadImg();
+        observer.disconnect();
+      }
+    }, { rootMargin: '200px' });
+    
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [product.id, src, loading]);
+
+  if (loading) {
+    return (
+      <div ref={ref} className="pcard-placeholder" style={{ background: ph.bg, opacity: 0.7 }}>
+        <div style={{ width:24, height:24, border:'3px solid rgba(0,0,0,0.1)', borderTopColor:'#333', borderRadius:'50%', animation:'spin 1s linear infinite' }} />
+      </div>
+    );
+  }
+
   if (src) {
     return (
       <img

@@ -19,8 +19,8 @@ import imageCompression from 'browser-image-compression';
 async function compressImage(file) {
   try {
     const options = {
-      maxSizeMB: 0.25,
-      maxWidthOrHeight: 800,
+      maxSizeMB: 0.8,
+      maxWidthOrHeight: 1200,
       useWebWorker: false, // Fix GH pages worker path issues
       fileType: 'image/webp', // WebP yields much smaller base64 strings
     };

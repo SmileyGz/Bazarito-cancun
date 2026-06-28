@@ -103,7 +103,7 @@ export async function getPublicProducts() {
   const { data, error } = await supabase
     .from('products')
     .select(`
-      id, name, description, sku, type, price, custom_attributes, created_at, images,
+      id, name, description, sku, type, price, custom_attributes, created_at,
       inventory (quantity),
       categories (slug)
     `)

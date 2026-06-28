@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Tag, Repeat, Truck, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { STATUSES, PRODUCT_TYPES, CATEGORIES } from '../data/store';
 import CheckoutModal from './CheckoutModal';
+import { supabase } from '../lib/supabase';
 
 const PLACEHOLDER_COLORS = {
   hogar:      { bg: '#FFF3E0', emoji: '🏠' },
@@ -99,10 +100,24 @@ export default function ProductModal({ product, onClose }) {
   const catLabel = CATEGORIES.find(c => c.id === product.category)?.label || product.category;
   const ph       = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', emoji: '📦' };
 
-  // Support images[] array and legacy image string
-  const images = product.images?.length
-    ? product.images
-    : (product.image ? [product.image] : []);
+  // Support images[] array and legacy image string, or fetch if missing
+  const [images, setImages] = useState(
+    product.images?.length ? product.images : (product.image ? [product.image] : [])
+  );
+  
+  // Since CatalogPage no longer fetches full images to prevent DB timeout, fetch them when modal opens
+  useEffect(() => {
+    if (images.length > 0) return;
+    let mounted = true;
+    async function loadImages() {
+      const { data } = await supabase.from('products').select('images').eq('id', product.id).single();
+      if (mounted && data?.images?.length) {
+        setImages(data.images);
+      }
+    }
+    loadImages();
+    return () => mounted = false;
+  }, [product.id, images.length]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
