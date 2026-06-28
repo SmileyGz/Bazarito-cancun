@@ -52,6 +52,20 @@ export default function AdminProductForm({ product, onSave, onClose }) {
         ? product.images
         : (product.image ? [product.image] : []);
       setForm({ ...EMPTY, ...product, images: imgs });
+      
+      // If no images exist, they might just be excluded from getProducts payload, so we must fetch them manually
+      if (imgs.length === 0) {
+        let mounted = true;
+        async function loadImages() {
+          const { supabase } = await import('../lib/supabase');
+          const { data } = await supabase.from('products').select('images').eq('id', product.id).single();
+          if (mounted && data?.images?.length) {
+             setForm(prev => ({ ...prev, images: data.images }));
+          }
+        }
+        loadImages();
+        return () => mounted = false;
+      }
     } else {
       setForm(EMPTY);
     }
