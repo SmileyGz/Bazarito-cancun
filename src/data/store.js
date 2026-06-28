@@ -59,7 +59,7 @@ export async function getProducts() {
   const { data, error } = await supabase
     .from('products')
     .select(`
-      *,
+      id, sku, name, description, status, price, cost, images, created_at, updated_at, custom_attributes,
       inventory (quantity),
       categories (slug),
       suppliers (name)
@@ -435,7 +435,9 @@ export async function getStats(products = null) {
   const sales    = await getSales();
   const active   = products.filter(p => p.status === STATUSES.AVAILABLE);
   const sold     = products.filter(p => p.status === STATUSES.SOLD);
-  const margins  = active.map(p => ((p.price - p.cost) / p.cost) * 100);
+  const margins  = active
+    .filter(p => p.cost > 0)
+    .map(p => ((p.price - p.cost) / p.cost) * 100);
   const avgMargin = margins.length > 0
     ? Math.round(margins.reduce((a,b) => a+b, 0) / margins.length) : 0;
   const totalValue   = active.reduce((s, p) => s + (p.price * (p.stock || 1)), 0);

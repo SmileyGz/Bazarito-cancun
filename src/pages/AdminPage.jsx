@@ -13,7 +13,7 @@ import MarketingPanel from '../components/MarketingPanel';
 import ReceiptModal from '../components/ReceiptModal';
 import {
   getProducts, addProduct, updateProduct, deleteProduct,
-  recordSale, getStats, STATUSES, PRODUCT_TYPES,
+  recordSale, getStats, getSales, STATUSES, PRODUCT_TYPES,
 } from '../data/store';
 import { supabase } from '../lib/supabase';
 
@@ -63,9 +63,13 @@ export default function AdminPage() {
 
   const reload = useCallback(() => {
     async function doReload() {
-      const fetchedProducts = await getProducts();
+      // Run products fetch and sales fetch in parallel — cuts load time in half
+      const [fetchedProducts] = await Promise.all([
+        getProducts(),
+        getSales(), // pre-warm the sales cache while products load
+      ]);
       setProducts(fetchedProducts);
-      setStats(await getStats(fetchedProducts));
+      setStats(await getStats(fetchedProducts)); // getSales will hit cache now
       setRefresh(r => r + 1);
     }
     doReload();

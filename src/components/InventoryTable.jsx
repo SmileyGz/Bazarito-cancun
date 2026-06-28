@@ -98,7 +98,9 @@ export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
               <tr><td colSpan={10} className="itbl-empty">No hay productos que coincidan</td></tr>
             )}
             {filtered.map(p => {
-              const margin   = Math.round(((p.price - p.cost) / p.cost) * 100);
+              const cost     = p.cost || 0;
+              const price    = p.price || 0;
+              const margin   = cost > 0 ? Math.round(((price - cost) / cost) * 100) : 0;
               const cat      = CATEGORIES.find(c => c.id === p.category);
               const st       = STATUS_MAP[p.status] || STATUS_MAP[STATUSES.AVAILABLE];
               const isSold   = p.status === STATUSES.SOLD;
@@ -110,7 +112,7 @@ export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
                     <div className="itbl-product">
                       <div className="itbl-thumb" style={{ background: isSold ? '#f0e8cc' : 'var(--bg-muted)' }}>
                         {(p.images?.[0] || p.image)
-                          ? <img src={p.images?.[0] || p.image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => e.target.style.display='none'} />
+                          ? <img src={p.images?.[0] || p.image} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => e.target.style.display='none'} />
                           : <span style={{ fontSize:'1.2rem' }}>{cat?.emoji || '📦'}</span>
                         }
                       </div>
@@ -130,8 +132,8 @@ export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
                       {p.type === PRODUCT_TYPES.STOCK ? 'Stock' : 'Única'}
                     </span>
                   </td>
-                  <td className="itbl-td itbl-num">${p.cost.toLocaleString('es-MX')}</td>
-                  <td className="itbl-td itbl-num itbl-price">${p.price.toLocaleString('es-MX')}</td>
+                  <td className="itbl-td itbl-num">${(cost).toLocaleString('es-MX')}</td>
+                  <td className="itbl-td itbl-num itbl-price">${(price).toLocaleString('es-MX')}</td>
                   <td className="itbl-td">
                     <span className={`badge ${margin >= 50 ? 'badge-green' : margin >= 0 ? 'badge-yellow' : 'badge-red'}`}
                       style={{ fontSize:'0.7rem' }}>
