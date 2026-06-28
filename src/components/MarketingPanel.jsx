@@ -17,7 +17,8 @@ export default function MarketingPanel({ products, reload }) {
 
   // Intake State
   const [intakeProductId, setIntakeProductId] = useState('');
-  const [intakeAds, setIntakeAds] = useState([{ category: '', profile: profiles[0] || '', copy: '', priceStr: '', description: '' }]);
+  const [intakePrice, setIntakePrice] = useState('');
+  const [intakeAds, setIntakeAds] = useState([{ category: '', profile: profiles[0] || '', copy: '', description: '' }]);
 
   useEffect(() => {
     localStorage.setItem('bazarito_marketing_profiles', JSON.stringify(profiles));
@@ -139,10 +140,9 @@ export default function MarketingPanel({ products, reload }) {
       }
     } catch (err) {
       console.error(err);
-      showToast('❌ Error de conexión con Facebook API.');
-    } finally {
-      setIsPosting(false);
+      showToast('❌ Error de red al publicar en FB.');
     }
+    setIsPosting(false);
   };
 
   // --- Archive Logic ---
@@ -184,6 +184,7 @@ export default function MarketingPanel({ products, reload }) {
     const formattedAds = validAds.map(ad => ({
       id: crypto.randomUUID(),
       ...ad,
+      priceStr: intakePrice,
       status: 'pending'
     }));
 
@@ -282,7 +283,7 @@ export default function MarketingPanel({ products, reload }) {
                       <div className="row-rank">#{index + 1}</div>
                       <div>
                         <h4 className="row-title">{item.product.name}</h4>
-                        <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center', flexWrap: 'wrap' }}>
                           <span className="badge badge-category" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{item.nextAd.category}</span>
                           <span 
                             className="badge badge-profile" 
@@ -291,6 +292,9 @@ export default function MarketingPanel({ products, reload }) {
                             title="Clic para re-asignar letra de perfil"
                           >
                             {item.nextAd.profile || 'Sin Asignar'} ✏️
+                          </span>
+                          <span className="badge badge-gray" style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'var(--bg-muted)' }}>
+                            ⏳ {item.product.marketing_ads.filter(a => a.status === 'posted').length}/{item.product.marketing_ads.length} Publicados
                           </span>
                         </div>
                       </div>
@@ -419,6 +423,11 @@ export default function MarketingPanel({ products, reload }) {
               </select>
             </div>
 
+            <div className="form-group" style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', marginBottom: 5, fontWeight: 600 }}>Precio de la Campaña (Texto, ej. $240,00)</label>
+              <input type="text" className="input" style={{ width: '100%' }} value={intakePrice} onChange={e => setIntakePrice(e.target.value)} placeholder="Se aplicará a todas las variantes" />
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {intakeAds.map((ad, idx) => (
                 <div key={idx} style={{ background: 'var(--bg-muted)', padding: 15, borderRadius: 8, border: '1px solid var(--border)' }}>
@@ -454,14 +463,6 @@ export default function MarketingPanel({ products, reload }) {
                     <input type="text" className="input" style={{ width: '100%' }} value={ad.copy} onChange={e => {
                       const newAds = [...intakeAds];
                       newAds[idx].copy = e.target.value;
-                      setIntakeAds(newAds);
-                    }} />
-                  </div>
-                  <div style={{ marginBottom: 10 }}>
-                    <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: 5 }}>Precio (Texto, ej. $240,00)</label>
-                    <input type="text" className="input" style={{ width: '100%' }} value={ad.priceStr} onChange={e => {
-                      const newAds = [...intakeAds];
-                      newAds[idx].priceStr = e.target.value;
                       setIntakeAds(newAds);
                     }} />
                   </div>
