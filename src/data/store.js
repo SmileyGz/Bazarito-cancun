@@ -187,7 +187,7 @@ export async function updateProduct(id, updates) {
   if (updates.cost !== undefined) payload.cost = updates.cost;
   if (updates.images !== undefined) payload.images = updates.images;
   // Merge custom_attributes so ui_type, variants, and delivery_enabled all survive
-  if (updates.type !== undefined || updates.variants !== undefined || updates.delivery_enabled !== undefined || updates.marketing_ads !== undefined) {
+  if (updates.type !== undefined || updates.variants !== undefined || updates.delivery_enabled !== undefined || updates.marketing_ads !== undefined || updates.queue_priority !== undefined) {
     const { data: existing, error: existingErr } = await supabase.from('products').select('custom_attributes').eq('id', id).single();
     if (existingErr) throw existingErr;
     const prev = existing?.custom_attributes || {};
@@ -197,6 +197,7 @@ export async function updateProduct(id, updates) {
       ...(updates.variants !== undefined         ? { variants: updates.variants }                   : {}),
       ...(updates.delivery_enabled !== undefined ? { delivery_enabled: updates.delivery_enabled }   : {}),
       ...(updates.marketing_ads !== undefined    ? { marketing_ads: updates.marketing_ads }         : {}),
+      ...(updates.queue_priority !== undefined   ? { queue_priority: updates.queue_priority }       : {}),
     };
   }
 

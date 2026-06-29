@@ -124,8 +124,8 @@ export default function MarketingPanel({ products, reload }) {
 
     try {
       await Promise.all([
-        updateProduct(currentItem.product.id, { custom_attributes: { ...currentItem.product.custom_attributes, queue_priority: newCurrentPriority } }),
-        updateProduct(targetItem.product.id, { custom_attributes: { ...targetItem.product.custom_attributes, queue_priority: newTargetPriority } })
+        updateProduct(currentItem.product.id, { queue_priority: newCurrentPriority }),
+        updateProduct(targetItem.product.id, { queue_priority: newTargetPriority })
       ]);
       reload();
     } catch (err) {
