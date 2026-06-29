@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Copy, CheckCircle, Rocket, Send, Megaphone, Plus, Archive, Settings, Trash2, Import } from 'lucide-react';
-import { updateProductAds, addProduct } from '../data/store';
+import { ExternalLink, Copy, CheckCircle, Rocket, Send, Megaphone, Plus, Archive, Settings, Trash2, Import, ChevronUp, ChevronDown, ListTree } from 'lucide-react';
+import { updateProductAds, addProduct, updateProduct } from '../data/store';
 
 export default function MarketingPanel({ products, reload }) {
   const [view, setView] = useState('queue'); // queue, intake, archive, settings
@@ -18,7 +18,8 @@ export default function MarketingPanel({ products, reload }) {
   // Intake State
   const [intakeProductId, setIntakeProductId] = useState('');
   const [intakePrice, setIntakePrice] = useState('');
-  const [intakeAds, setIntakeAds] = useState([{ category: '', profile: profiles[0] || '', copy: '', description: '' }]);
+  const [intakeAds, setIntakeAds] = useState([{ category: '', profile: '', copy: '', description: '' }]);
+  const [expandedProduct, setExpandedProduct] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('bazarito_marketing_profiles', JSON.stringify(profiles));
@@ -55,13 +56,20 @@ export default function MarketingPanel({ products, reload }) {
         lastPosted = Math.max(...dates);
       }
       const nextPendingIndex = p.marketing_ads.findIndex(ad => ad.status === 'pending');
-      return { product: p, lastPosted, nextAd: p.marketing_ads[nextPendingIndex], nextAdIndex: nextPendingIndex };
+      const queuePriority = p.custom_attributes?.queue_priority || 0;
+      return { product: p, lastPosted, nextAd: p.marketing_ads[nextPendingIndex], nextAdIndex: nextPendingIndex, queuePriority };
     });
 
     productsWithStats.sort((a, b) => {
+      // 1. Sort by manual queue priority first (higher number = higher priority)
+      if (a.queuePriority !== b.queuePriority) {
+        return b.queuePriority - a.queuePriority;
+      }
+      
+      // 2. Then sort by last posted date (oldest first)
       if (a.lastPosted === b.lastPosted) {
-        // Prioritize newest created products if they have the same lastPosted date (e.g. both 0)
-        return new Date(b.product.createdAt || 0).getTime() - new Date(a.product.createdAt || 0).getTime();
+        // 3. Fallback: newest created products first
+        return new Date(b.product.created_at || 0).getTime() - new Date(a.product.created_at || 0).getTime();
       }
       return a.lastPosted - b.lastPosted;
     });
@@ -96,6 +104,52 @@ export default function MarketingPanel({ products, reload }) {
       } catch (err) {
         showToast('❌ Error al actualizar el perfil');
       }
+    }
+  };
+
+  const handleSwapQueue = async (index, direction) => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === productsWithStats.length - 1) return;
+
+    const currentItem = productsWithStats[index];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const targetItem = productsWithStats[targetIndex];
+
+    let newCurrentPriority = targetItem.queuePriority;
+    let newTargetPriority = currentItem.queuePriority;
+
+    if (newCurrentPriority === newTargetPriority) {
+      newCurrentPriority = direction === 'up' ? newCurrentPriority + 1 : newCurrentPriority - 1;
+    }
+
+    try {
+      await Promise.all([
+        updateProduct(currentItem.product.id, { custom_attributes: { ...currentItem.product.custom_attributes, queue_priority: newCurrentPriority } }),
+        updateProduct(targetItem.product.id, { custom_attributes: { ...targetItem.product.custom_attributes, queue_priority: newTargetPriority } })
+      ]);
+      reload();
+    } catch (err) {
+      showToast('❌ Error reordenando en la cola.');
+    }
+  };
+
+  const handleSwapAdVariant = async (product, index, direction) => {
+    const newAds = [...product.marketing_ads];
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === newAds.length - 1) return;
+    
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    // Swap
+    const temp = newAds[index];
+    newAds[index] = newAds[targetIndex];
+    newAds[targetIndex] = temp;
+    
+    try {
+      await updateProductAds(product.id, newAds);
+      reload();
+    } catch (err) {
+      showToast('❌ Error reordenando variantes.');
     }
   };
 
@@ -202,7 +256,7 @@ export default function MarketingPanel({ products, reload }) {
   };
 
   const addIntakeAd = () => {
-    setIntakeAds([...intakeAds, { category: '', profile: profiles[0] || '', copy: '', priceStr: '', description: '' }]);
+    setIntakeAds([...intakeAds, { category: '', profile: '', copy: '', description: '' }]);
   };
 
   const handleImportLegacy = async () => {
@@ -276,67 +330,105 @@ export default function MarketingPanel({ products, reload }) {
               {productsWithStats.map((item, index) => {
                 const isFirst = index === 0;
                 return (
-                  <div key={item.product.id} className={`compact-queue-row ${isFirst ? 'row-first' : ''}`}>
-                    
-                    {/* Left: Rank & Info */}
-                    <div className="row-info">
-                      <div className="row-rank">#{index + 1}</div>
-                      <div>
-                        <h4 className="row-title">{item.product.name}</h4>
-                        <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span className="badge badge-category" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{item.nextAd.category}</span>
-                          <span 
-                            className="badge badge-profile" 
-                            style={{ fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', border: '1px dashed var(--teal)' }}
-                            onClick={() => handleUpdateProfile(item.product, item.nextAdIndex)}
-                            title="Clic para re-asignar letra de perfil"
-                          >
-                            {item.nextAd.profile || 'Sin Asignar'} ✏️
-                          </span>
-                          <span className="badge badge-gray" style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'var(--bg-muted)' }}>
-                            ⏳ {item.product.marketing_ads.filter(a => a.status === 'posted').length}/{item.product.marketing_ads.length} Publicados
-                          </span>
+                  <div key={item.product.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div className={`compact-queue-row ${isFirst ? 'row-first' : ''}`} style={{ borderRadius: expandedProduct === item.product.id ? 'var(--radius-md) var(--radius-md) 0 0' : 'var(--radius-md)' }}>
+                      
+                      {/* Left: Rank & Info */}
+                      <div className="row-info">
+                        <div className="row-rank" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                          <button className="btn-icon" style={{ padding: 2, background: 'transparent', border: 'none', color: index === 0 ? 'transparent' : 'var(--text-muted)' }} disabled={index === 0} onClick={() => handleSwapQueue(index, 'up')}>
+                            <ChevronUp size={16} />
+                          </button>
+                          <span>#{index + 1}</span>
+                          <button className="btn-icon" style={{ padding: 2, background: 'transparent', border: 'none', color: index === productsWithStats.length - 1 ? 'transparent' : 'var(--text-muted)' }} disabled={index === productsWithStats.length - 1} onClick={() => handleSwapQueue(index, 'down')}>
+                            <ChevronDown size={16} />
+                          </button>
+                        </div>
+                        <div>
+                          <h4 className="row-title">{item.product.name}</h4>
+                          <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <span className="badge badge-category" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{item.nextAd.category}</span>
+                            <span 
+                              className="badge badge-profile" 
+                              style={{ fontSize: '0.7rem', padding: '2px 6px', cursor: 'pointer', border: '1px dashed var(--teal)' }}
+                              onClick={() => handleUpdateProfile(item.product, item.nextAdIndex)}
+                              title="Clic para re-asignar letra de perfil"
+                            >
+                              {item.nextAd.profile || 'Sin Asignar'} ✏️
+                            </span>
+                            <span className="badge badge-gray" style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'var(--bg-muted)' }}>
+                              ⏳ {item.product.marketing_ads.filter(a => a.status === 'posted').length}/{item.product.marketing_ads.length} Publicados
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Middle: Copy Snippets */}
-                    <div className="row-snippet" style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <strong style={{ minWidth: '65px' }}>Headline:</strong> 
-                        <span className="truncate-text" style={{ flex: 1 }}>{item.nextAd.copy || ''}</span>
-                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.copy || '', 'Headline')} title="Copiar Headline" style={{ padding: '2px 6px', height: '24px' }}>
-                          <Copy size={12} />
+                      {/* Middle: Copy Snippets */}
+                      <div className="row-snippet" style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflow: 'hidden' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <strong style={{ minWidth: '65px' }}>Headline:</strong> 
+                          <span className="truncate-text" style={{ flex: 1 }}>{item.nextAd.copy || ''}</span>
+                          <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.copy || '', 'Headline')} title="Copiar Headline" style={{ padding: '2px 6px', height: '24px' }}>
+                            <Copy size={12} />
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <strong style={{ minWidth: '65px' }}>Desc:</strong> 
+                          <span className="truncate-text" style={{ flex: 1, color: 'var(--text-muted)' }}>{(item.nextAd.description || '').split('\n')[0]}...</span>
+                          <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.description || '', 'Descripción')} title="Copiar Descripción" style={{ padding: '2px 6px', height: '24px' }}>
+                            <Copy size={12} />
+                          </button>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: '2px' }}>
+                          <strong style={{ minWidth: '65px' }}>Precio:</strong> 
+                          <span className="truncate-text" style={{ flex: 1, color: 'var(--teal)', fontWeight: 'bold' }}>{item.nextAd.priceStr || ''}</span>
+                        </div>
+                      </div>
+
+                      {/* Right: Actions (Aligned Together) */}
+                      <div className="row-actions" style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center' }}>
+                        <button className="btn btn-sm btn-outline" onClick={() => setExpandedProduct(expandedProduct === item.product.id ? null : item.product.id)} title="Ver/Reordenar Variantes">
+                          <ListTree size={14} />
+                        </button>
+                        <button className="btn btn-sm btn-api" onClick={() => postToFacebookAPI('page', item)} disabled={isPosting} title="Publicar Página">
+                          <Send size={14} /> <span className="hide-mobile">Página</span>
+                        </button>
+                        <button className="btn btn-sm btn-api" onClick={() => postToFacebookAPI('group', item)} disabled={isPosting} title="Publicar Grupo">
+                          <Send size={14} /> <span className="hide-mobile">Grupo</span>
+                        </button>
+                        <button className="btn btn-sm btn-teal" onClick={() => handleMarkPosted(item)} title="Marcar como Terminado">
+                          <CheckCircle size={14} /> <span className="hide-mobile">Terminar</span>
                         </button>
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <strong style={{ minWidth: '65px' }}>Desc:</strong> 
-                        <span className="truncate-text" style={{ flex: 1, color: 'var(--text-muted)' }}>{(item.nextAd.description || '').split('\n')[0]}...</span>
-                        <button className="btn btn-icon btn-sm" onClick={() => handleCopy(item.nextAd.description || '', 'Descripción')} title="Copiar Descripción" style={{ padding: '2px 6px', height: '24px' }}>
-                          <Copy size={12} />
-                        </button>
-                      </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: '2px' }}>
-                        <strong style={{ minWidth: '65px' }}>Precio:</strong> 
-                        <span className="truncate-text" style={{ flex: 1, color: 'var(--teal)', fontWeight: 'bold' }}>{item.nextAd.priceStr || ''}</span>
-                      </div>
                     </div>
 
-                    {/* Right: Actions (Aligned Together) */}
-                    <div className="row-actions" style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center' }}>
-                      <button className="btn btn-sm btn-api" onClick={() => postToFacebookAPI('page', item)} disabled={isPosting} title="Publicar Página">
-                        <Send size={14} /> <span className="hide-mobile">Página</span>
-                      </button>
-                      <button className="btn btn-sm btn-api" onClick={() => postToFacebookAPI('group', item)} disabled={isPosting} title="Publicar Grupo">
-                        <Send size={14} /> <span className="hide-mobile">Grupo</span>
-                      </button>
-                      <button className="btn btn-sm btn-teal" onClick={() => handleMarkPosted(item)} title="Marcar como Terminado">
-                        <CheckCircle size={14} /> <span className="hide-mobile">Terminar</span>
-                      </button>
-                    </div>
-
+                    {/* Expanded Variants View */}
+                    {expandedProduct === item.product.id && (
+                      <div style={{ padding: '15px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 var(--radius-md) var(--radius-md)', marginTop: '-1px', zIndex: 1 }}>
+                        <h5 style={{ marginTop: 0, marginBottom: 15, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Orden de Variantes (Cola Interna)</h5>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {item.product.marketing_ads.map((ad, adIdx) => (
+                            <div key={ad.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--bg-muted)', borderRadius: 6, opacity: ad.status === 'posted' ? 0.5 : 1 }}>
+                              {ad.status === 'pending' ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                  <button className="btn-icon" style={{ padding: 2, background: 'transparent', border: 'none', color: adIdx === 0 ? 'transparent' : 'var(--text-muted)' }} disabled={adIdx === 0} onClick={() => handleSwapAdVariant(item.product, adIdx, 'up')}><ChevronUp size={16} /></button>
+                                  <button className="btn-icon" style={{ padding: 2, background: 'transparent', border: 'none', color: adIdx === item.product.marketing_ads.length - 1 ? 'transparent' : 'var(--text-muted)' }} disabled={adIdx === item.product.marketing_ads.length - 1} onClick={() => handleSwapAdVariant(item.product, adIdx, 'down')}><ChevronDown size={16} /></button>
+                                </div>
+                              ) : (
+                                <div style={{ width: 24, display: 'flex', justifyContent: 'center' }}>
+                                  <CheckCircle size={16} color="var(--teal)" />
+                                </div>
+                              )}
+                              <span className="badge badge-category" style={{ fontSize: '0.7rem', minWidth: 60, textAlign: 'center' }}>{ad.category}</span>
+                              <span className="truncate-text" style={{ flex: 1, fontSize: '0.85rem' }}>{ad.copy}</span>
+                              <span style={{ fontSize: '0.8rem', color: ad.status === 'pending' ? 'var(--teal)' : 'var(--text-muted)', fontWeight: 600 }}>{ad.status === 'pending' ? 'En cola' : 'Publicado'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
