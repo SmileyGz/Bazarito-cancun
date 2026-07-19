@@ -10,13 +10,19 @@ export async function generateMetadata({ params }) {
     return { title: 'Producto no encontrado | Bazarito Cancún' };
   }
 
+  const getValidImages = () => {
+    let imgs = data.images?.length ? data.images : (data.image ? [data.image] : []);
+    imgs = imgs.map(img => img.includes('social-cover.jpg') ? 'https://bazaritocancun.com/Logo.png' : img);
+    return imgs.map(url => ({ url }));
+  };
+
   return {
     title: `${data.name} | Bazarito Cancún ☀️`,
     description: data.description || 'Encuentra lo que necesitas con entrega rápida en Cancún. Pago seguro con MercadoPago.',
     openGraph: {
       title: `${data.name} | Bazarito Cancún ☀️`,
       description: data.description || 'Producto disponible con entrega en Cancún.',
-      images: data.images?.length ? [{ url: data.images[0] }] : (data.image ? [{ url: data.image }] : []),
+      images: getValidImages(),
       locale: 'es_MX',
       siteName: 'Bazarito Cancún',
     },
@@ -24,7 +30,7 @@ export async function generateMetadata({ params }) {
       card: 'summary_large_image',
       title: `${data.name} | Bazarito Cancún ☀️`,
       description: data.description || 'Producto disponible con entrega en Cancún.',
-      images: data.images?.length ? [data.images[0]] : (data.image ? [data.image] : []),
+      images: getValidImages().map(img => img.url),
     },
   };
 }
