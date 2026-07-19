@@ -61,7 +61,11 @@ export default function ProductGrid({ products, onProductClick }) {
         }
         .grid-empty p { font-size: 0.9rem; }
         @media (max-width: 480px) {
-          .pgrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .pgrid { 
+            grid-template-columns: repeat(2, minmax(0, 1fr)); 
+            gap: 12px; 
+            justify-content: center;
+          }
         }
       `}</style>
     </>

@@ -211,7 +211,11 @@
         }
         .grid-empty p { font-size: 0.9rem; }
         @media (max-width: 480px) {
-          .pgrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .pgrid { 
+            grid-template-columns: repeat(2, minmax(0, 1fr)); 
+            gap: 12px; 
+            justify-content: center;
+          }
         }
       `})]})}var P=e.i(18566);e.s(["default",0,function(){let[e,r]=(0,a.useState)([]),[i,o]=(0,a.useState)("all"),[s,n]=(0,a.useState)(!0),d=(0,P.useRouter)();(0,a.useEffect)(()=>{!async function(){n(!0),r(await (0,l.getPublicProducts)()),n(!1)}()},[]),(0,a.useEffect)(()=>{let e=Date.now();async function t(){if("visible"===document.visibilityState){let t=Date.now();t-e>3e4&&(r(await (0,l.getPublicProducts)()),e=t)}}return document.addEventListener("visibilitychange",t),()=>document.removeEventListener("visibilitychange",t)},[]);let c="all"===i?e:e.filter(e=>e.category===i);return(0,t.jsxs)(t.Fragment,{children:[(0,t.jsx)(p,{}),(0,t.jsx)(g,{active:i,onChange:o}),(0,t.jsx)("main",{className:"container",style:{paddingTop:32,paddingBottom:60},children:!s&&(0,t.jsxs)(t.Fragment,{children:[(0,t.jsxs)("div",{className:"catalog-meta",children:[(0,t.jsxs)("span",{className:"catalog-count",children:[c.length," producto",1!==c.length?"s":"","all"!==i?" en esta categoría":" en total"]}),(0,t.jsx)("span",{className:"catalog-hint",children:"Toca cualquier producto para ver detalles 👆"})]}),(0,t.jsx)(B,{products:c,onProductClick:e=>d.push("/p/"+(e.slug||e.id))})]})}),(0,t.jsx)("style",{children:`
         .catalog-meta {
