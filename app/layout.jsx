@@ -3,10 +3,13 @@ import Navbar from '../src/components/Navbar';
 import Footer from '../src/components/Footer';
 import Script from 'next/script';
 
+export const viewport = {
+  themeColor: '#FFD000',
+};
+
 export const metadata = {
   title: 'Bazarito Cancún ☀️ — Productos útiles a precios locales',
   description: 'Organización, gadgets, hogar, mascotas y más. Productos reales, precios locales y entregas seguras en Cancún (Región 96 y alrededores).',
-  themeColor: '#FFD000',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
