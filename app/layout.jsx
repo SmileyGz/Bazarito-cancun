@@ -32,9 +32,6 @@ export const metadata = {
     description: '¡Ofertas, gadgets y más en un solo lugar! Encuentra lo que necesitas con entrega rápida en Cancún.',
     images: ['https://bazaritocancun.com/Logo.png'],
   },
-  other: {
-    'fb:app_id': '933683316366381', // Usamos el ID del Pixel de forma provisional para silenciar la advertencia
-  },
 };
 
 export default function RootLayout({ children }) {

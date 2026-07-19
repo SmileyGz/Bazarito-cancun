@@ -13,6 +13,7 @@ export async function generateMetadata({ params }) {
   const getValidImages = () => {
     let imgs = data.images?.length ? data.images : (data.image ? [data.image] : []);
     imgs = imgs.map(img => img.includes('social-cover.jpg') ? 'https://bazaritocancun.com/Logo.png' : img);
+    if (imgs.length === 0) imgs = ['https://bazaritocancun.com/Logo.png'];
     return imgs.map(url => ({ url }));
   };
 
@@ -31,9 +32,6 @@ export async function generateMetadata({ params }) {
       title: `${data.name} | Bazarito Cancún ☀️`,
       description: data.description || 'Producto disponible con entrega en Cancún.',
       images: getValidImages().map(img => img.url),
-    },
-    other: {
-      'fb:app_id': '933683316366381',
     },
   };
 }
