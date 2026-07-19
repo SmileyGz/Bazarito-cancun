@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Check, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package, Share2, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package, Share2, ShoppingBag, MapPin, Truck, Clock } from 'lucide-react';
 import { filterValidImages } from '../../../src/data/store';
 import CheckoutModal from '../../../src/components/CheckoutModal';
 
@@ -255,10 +255,51 @@ export default function ClientPage({ product }) {
               </button>
             </div>
             
-            <div className="plp-trust">
-              <span>🛡️ Compra segura con MercadoPago</span>
-              <span>{deliveryEnabled ? '🚚 Recolección gratis · Entrega disponible en Cancún' : '📦 Solo recolección en tienda (Región 96)'}</span>
-              <span>✅ Negocio local verificado · Región 96</span>
+            {/* Delivery info */}
+            <div className="plp-delivery">
+              <div className="plp-ditem">
+                <MapPin size={16} className="plp-dicon" />
+                <div>
+                  <p className="plp-dlabel">Recolección gratis</p>
+                  <p className="plp-dval">Región 96, Cancún · Producto listo en 15–30 min</p>
+                </div>
+              </div>
+              {deliveryEnabled && (
+                <>
+                  <div className="plp-ditem">
+                    <Truck size={16} className="plp-dicon" />
+                    <div>
+                      <p className="plp-dlabel">Entrega a domicilio</p>
+                      <p className="plp-dval">$50 (1–6 km) · $80 (6–10 km)</p>
+                    </div>
+                  </div>
+                  <div className="plp-ditem">
+                    <Clock size={16} className="plp-dicon" />
+                    <div>
+                      <p className="plp-dlabel">Horario nocturno</p>
+                      <p className="plp-dval">Después de 8 PM $100</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Payment Methods */}
+            <div className="plp-pay">
+              <p className="plp-pay-title">Métodos de pago</p>
+              <div className="plp-pay-methods">
+                <span className="plp-pay-method">💳 Mercado Pago</span>
+                {deliveryEnabled && (
+                  <span className="plp-pay-method">💵 Efectivo al recibir <span className="plp-pay-note">(envío $80 · depósito $50)</span></span>
+                )}
+                <span className="plp-pay-method">🏪 Efectivo en recolección <span className="plp-pay-note">(listo en 15–30 min)</span></span>
+              </div>
+            </div>
+
+            <div className="plp-trust-badges">
+              <span className="trust-badge">🛡️ Compra segura</span>
+              <span className="trust-badge">🤝 Paga al recibir</span>
+              <span className="trust-badge">✅ Entrega express</span>
             </div>
           </div>
         </div>
@@ -409,13 +450,35 @@ export default function ClientPage({ product }) {
             color: var(--teal);
             background: rgba(26,122,109,0.05);
           }
-          .plp-trust {
-            display: flex; flex-direction: column; gap: 6px;
-            font-size: 0.82rem; color: var(--text-muted);
-            background: var(--bg-muted);
-            border-radius: var(--radius-md);
-            padding: 12px 14px;
-            line-height: 1.5;
+          .plp-delivery {
+            display: flex; flex-direction: column; gap: 10px;
+            padding: 14px; background: var(--bg-card);
+            border: 1.5px solid var(--border); border-radius: var(--radius-md);
+          }
+          .plp-ditem { display: flex; align-items: flex-start; gap: 10px; }
+          .plp-dicon { color: var(--teal); flex-shrink: 0; margin-top: 2px; }
+          .plp-dlabel { font-weight: 600; font-size: 0.85rem; color: var(--text-primary); margin: 0; }
+          .plp-dval   { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+
+          /* Payment methods */
+          .plp-pay {
+            padding: 14px; background: var(--bg-muted);
+            border: 1.5px solid var(--border); border-radius: var(--radius-md);
+          }
+          .plp-pay-title {
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--text-muted); margin: 0 0 8px 0;
+          }
+          .plp-pay-methods { display: flex; flex-direction: column; gap: 6px; }
+          .plp-pay-method { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+          .plp-pay-note { font-size: 0.78rem; color: var(--text-muted); font-weight: 400; }
+          
+          .plp-trust-badges {
+            display: flex; justify-content: center; gap: 12px; margin-top: 4px;
+          }
+          .trust-badge {
+            font-size: 0.72rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 4px;
           }
           
           .plp-error {
