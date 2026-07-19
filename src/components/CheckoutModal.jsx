@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, MapPin, Truck, Moon, ShieldCheck, CreditCard, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 import MercadoPagoWallet from './MercadoPagoWallet';
 
 // ── Delivery zones ──────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ function buildPickupSlots() {
 const PICKUP_SLOTS = buildPickupSlots();
 
 // ── Edge Function URL ───────────────────────────────────────────────────────
-const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-preference`;
+const FN_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-preference`;
 
 export default function CheckoutModal({ product, onClose, quantity = 1 }) {
   React.useEffect(() => {

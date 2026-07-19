@@ -8,8 +8,8 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="container navbar-inner">
         {/* Logo — links to catalog root */}
-        <Link to="/" className="navbar-logo">
-          <img src={`${import.meta.env.BASE_URL}Logo.png`} alt="Bazarito Cancún" style={{ height: 44 }} />
+        <Link href="/" className="navbar-logo">
+          <img src="/Logo.png" alt="Bazarito Cancún" style={{ height: 44 }} />
         </Link>
 
         {/* Actions */}

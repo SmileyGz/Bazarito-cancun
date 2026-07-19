@@ -81,7 +81,7 @@ export default function ProductCard({ product, onClick }) {
   async function handleShare(e) {
     e.stopPropagation();
     e.preventDefault();
-    const url = `${window.location.origin}${import.meta.env.BASE_URL}p/${product.id}`;
+    const url = `${window.location.origin}/p/${product.id}`;
     
     if (navigator.share) {
       try {

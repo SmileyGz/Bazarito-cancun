@@ -28,7 +28,7 @@ export default function MercadoPagoWallet({ preferenceId, onError }) {
     loadMPSdk().then((MercadoPago) => {
       if (destroyed || !containerRef.current) return;
 
-      const mp = new MercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY, { locale: 'es-MX' });
+      const mp = new MercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY, { locale: 'es-MX' });
       const bricksBuilder = mp.bricks();
 
       // Clear any previous elements to avoid duplicates/stale state

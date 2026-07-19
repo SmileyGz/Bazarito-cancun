@@ -61,7 +61,7 @@ ${sale.notes ? `📝 *Notas:* ${sale.notes}\n--------------------------------` :
 
         <div className="receipt-paper">
           <div className="receipt-logo">
-            <img src={`${import.meta.env.BASE_URL}Logo.png`} alt="Bazarito" />
+            <img src="/Logo.png" alt="Bazarito" />
           </div>
           <h4>RECIBO DE COMPRA</h4>
           <p className="receipt-date">{dateStr}</p>
