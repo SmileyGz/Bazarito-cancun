@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-
-# Sitemap location
-Sitemap: https://bazaritocancun.com/sitemap.xml
-
-# Block admin panel from indexing
-Disallow: /admin

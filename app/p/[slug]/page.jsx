@@ -2,6 +2,8 @@ import { supabase } from '../../../src/lib/supabase';
 import ClientPage from './ClientPage';
 import { notFound } from 'next/navigation';
 
+export const revalidate = 3600; // 1 hour
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const { data } = await supabase.from('products').select('*').eq('slug', slug).single();
@@ -20,6 +22,9 @@ export async function generateMetadata({ params }) {
   return {
     title: `${data.name} | Bazarito Cancún ☀️`,
     description: data.description || 'Encuentra lo que necesitas con entrega rápida en Cancún. Pago seguro con MercadoPago.',
+    alternates: {
+      canonical: `/p/${slug}`,
+    },
     openGraph: {
       title: `${data.name} | Bazarito Cancún ☀️`,
       description: data.description || 'Producto disponible con entrega en Cancún.',
