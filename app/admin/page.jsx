@@ -1,21 +1,23 @@
+"use client";
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, LogOut, Eye, Package, TrendingUp, ClipboardList, AlertTriangle, DollarSign, Globe, Megaphone } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import LoginGate     from '../components/LoginGate';
-import StatsBar      from '../components/StatsBar';
-import InventoryTable from '../components/InventoryTable';
-import AdminProductForm from '../components/AdminProductForm';
-import SaleModal     from '../components/SaleModal';
-import SalesLog      from '../components/SalesLog';
-import BusinessInsightsPanel  from '../components/BusinessInsightsPanel';
-import IntegrationsPanel from '../components/IntegrationsPanel';
-import MarketingPanel from '../components/MarketingPanel';
-import ReceiptModal from '../components/ReceiptModal';
+import Link from 'next/link';
+import LoginGate     from '../../src/components/LoginGate';
+import StatsBar      from '../../src/components/StatsBar';
+import InventoryTable from '../../src/components/InventoryTable';
+import AdminProductForm from '../../src/components/AdminProductForm';
+import SaleModal     from '../../src/components/SaleModal';
+import SalesLog      from '../../src/components/SalesLog';
+import BusinessInsightsPanel  from '../../src/components/BusinessInsightsPanel';
+import IntegrationsPanel from '../../src/components/IntegrationsPanel';
+import MarketingPanel from '../../src/components/MarketingPanel';
+import ReceiptModal from '../../src/components/ReceiptModal';
 import {
   getProducts, addProduct, updateProduct, deleteProduct,
   recordSale, getStats, getSales, STATUSES, PRODUCT_TYPES,
-} from '../data/store';
-import { supabase } from '../lib/supabase';
+} from '../../src/data/store';
+import { supabase } from '../../src/lib/supabase';
 
 // ─── Toast ────────────────────────────────────
 function Toast({ message, onDone }) {
@@ -149,7 +151,7 @@ export default function AdminPage() {
           {/* Row 1: logo + actions */}
           <div className="admin-header-row1">
             <div className="admin-logo">
-              <img src={`${import.meta.env.BASE_URL}Logo.png`} alt="Bazarito Cancún" style={{ height: 42 }} />
+              <img src={'/Logo.png'} alt="Bazarito Cancún" style={{ height: 42 }} />
               <div style={{ marginLeft: 8, display: 'flex', alignItems: 'center' }}>
                 <span style={{ fontSize:'0.7rem',color:'var(--teal)',fontWeight:800,letterSpacing:'0.07em',textTransform:'uppercase' }}>
                   Admin
@@ -159,7 +161,7 @@ export default function AdminPage() {
 
             {/* Actions */}
             <div style={{ display:'flex',gap:8,marginLeft:'auto' }}>
-              <Link to="/" className="btn btn-outline btn-sm" target="_blank" rel="noopener noreferrer">
+              <Link href="/" className="btn btn-outline btn-sm" target="_blank" rel="noopener noreferrer">
                 <Eye size={14} /> <span className="hide-xs">Catálogo</span>
               </Link>
               {tab === 'inventory' && (

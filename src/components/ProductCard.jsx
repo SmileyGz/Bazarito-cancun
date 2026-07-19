@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Tag, Repeat, ChevronRight, Share2, Check, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { STATUSES, PRODUCT_TYPES, CATEGORIES, filterValidImages } from '../data/store';
 
 // Gradient placeholder backgrounds per category
@@ -204,7 +204,7 @@ export default function ProductCard({ product, onClick }) {
 
         {/* ── Price CTA — links semantic URL for SEO, opens modal for users ── */}
         <Link
-          to={`/p/${product.id}`}
+          href={`/p/${product.id}`}
           className="pcard-cta"
           onClick={(e) => {
             e.preventDefault();

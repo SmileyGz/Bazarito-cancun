@@ -1,9 +1,11 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
-import HeroSection from '../components/HeroSection';
-import CategoryFilter from '../components/CategoryFilter';
-import ProductGrid from '../components/ProductGrid';
-import ProductModal from '../components/ProductModal';
-import { getPublicProducts } from '../data/store';
+import HeroSection from '../src/components/HeroSection';
+import CategoryFilter from '../src/components/CategoryFilter';
+import ProductGrid from '../src/components/ProductGrid';
+import ProductModal from '../src/components/ProductModal';
+import { getPublicProducts } from '../src/data/store';
 
 export default function CatalogPage() {
   const [products, setProducts]     = useState([]);
@@ -66,7 +68,7 @@ export default function CatalogPage() {
       <footer className="catalog-footer">
         <div className="container" style={{ textAlign:'center', paddingTop: 32, paddingLeft: 20, paddingRight: 20, paddingBottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
           <img 
-            src={`${import.meta.env.BASE_URL}Logo.png`}
+            src={'/Logo.png'}
             alt="Bazarito Cancún" 
             style={{ height: 50, display: 'block', margin: '0 auto 12px auto' }} 
           />

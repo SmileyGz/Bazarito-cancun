@@ -1,10 +1,10 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Copy, Check, MessageCircle, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { filterValidImages } from '../data/store';
-import CheckoutModal from '../components/CheckoutModal';
-import Navbar from '../components/Navbar';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight, Check, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package, Share2, ShoppingBag } from 'lucide-react';
+import { filterValidImages } from '../../../src/data/store';
+import CheckoutModal from '../../../src/components/CheckoutModal';
 
 const PLACEHOLDER_COLORS = {
   hogar:      { bg: '#FFF3E0', icon: Home },
@@ -73,115 +73,72 @@ function ImageGallery({ images, placeholder }) {
   );
 }
 
-export default function ProductLandingPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function ClientPage({ product }) {
+  const router = useRouter();
   const [showCheckout, setShowCheckout] = useState(false);
   const [copied, setCopied] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
+  // We rely on the Server Component for JSON-LD and Metadata.
   useEffect(() => {
-    async function load() {
-      try {
-        const { data } = await supabase.from('products').select('*, inventory(quantity)').eq('id', id).single();
-        if (data) {
-          const mappedProduct = {
-            ...data,
-            category: data.category_id || 'hogar',
-            stock: data.inventory?.quantity != null ? data.inventory.quantity : null,
-            type: data.custom_attributes?.ui_type || (data.inventory ? 'stock' : 'one_off'),
-            variants: data.custom_attributes?.variants || [],
-            delivery_enabled: data.custom_attributes?.delivery_enabled !== false,
-          };
-          setProduct(mappedProduct);
-          // Dynamic SEO Tags — include ☀️ brand emoji in title
-          document.title = `${data.name} | Bazarito Cancún ☀️`;
-          
-          const metaDesc = document.querySelector('meta[name="description"]');
-          if (metaDesc) {
-            metaDesc.setAttribute('content', data.description || 'Encuentra lo que necesitas con entrega rápida en Cancún. Pago seguro con MercadoPago.');
-          }
+    // Dynamic JSON-LD is already set by Server Component? 
+    // Actually, Server Components don't automatically generate JSON-LD script tags unless we add them to the JSX.
+    // Let's add it here dynamically just to be safe.
+    const existingScript = document.getElementById('product-jsonld');
+    if (existingScript) existingScript.remove();
 
-          // Open Graph dynamic tags for social sharing
-          const ogTitle = document.querySelector('meta[property="og:title"]');
-          if (ogTitle) ogTitle.setAttribute('content', `${data.name} | Bazarito Cancún ☀️`);
-          const ogDesc = document.querySelector('meta[property="og:description"]');
-          if (ogDesc) ogDesc.setAttribute('content', data.description || 'Producto disponible con entrega en Cancún.');
-          if (data.images?.[0]) {
-            const ogImg = document.querySelector('meta[property="og:image"]');
-            if (ogImg) ogImg.setAttribute('content', data.images[0]);
-          }
+    const script = document.createElement('script');
+    script.id = 'product-jsonld';
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description: product.description || 'Producto disponible en Bazarito Cancún con entrega local.',
+      image: product.images?.length ? product.images : (product.image ? [product.image] : []),
+      sku: product.id,
+      brand: {
+        '@type': 'Brand',
+        name: 'Bazarito Cancún',
+      },
+      offers: {
+        '@type': 'Offer',
+        url: `https://bazaritocancun.com/p/${product.id}`,
+        priceCurrency: 'MXN',
+        price: product.price,
+        priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+        availability: (product.status === 'sold' || product.status === 'out_of_stock')
+          ? 'https://schema.org/OutOfStock'
+          : 'https://schema.org/InStock',
+        seller: {
+          '@type': 'Organization',
+          name: 'Bazarito Cancún',
+        },
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingRate: {
+            '@type': 'MonetaryAmount',
+            value: 50,
+            currency: 'MXN',
+          },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+            transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 1, unitCode: 'DAY' },
+          },
+        },
+      },
+    });
+    document.head.appendChild(script);
 
-          // ══════════════════════════════════════════════════════
-          // PRODUCT JSON-LD — Feeds Google Rich Results, Shopping,
-          // and AI search engines (ChatGPT, Gemini, Perplexity)
-          // ══════════════════════════════════════════════════════
-          const existingScript = document.getElementById('product-jsonld');
-          if (existingScript) existingScript.remove();
-
-          const script = document.createElement('script');
-          script.id = 'product-jsonld';
-          script.type = 'application/ld+json';
-          script.textContent = JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Product',
-            name: data.name,
-            description: data.description || 'Producto disponible en Bazarito Cancún con entrega local.',
-            image: data.images?.length ? data.images : (data.image ? [data.image] : []),
-            sku: data.id,
-            brand: {
-              '@type': 'Brand',
-              name: 'Bazarito Cancún',
-            },
-            offers: {
-              '@type': 'Offer',
-              url: `https://bazaritocancun.com/p/${data.id}`,
-              priceCurrency: 'MXN',
-              price: data.price,
-              priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-              availability: (data.status === 'sold' || data.status === 'out_of_stock')
-                ? 'https://schema.org/OutOfStock'
-                : 'https://schema.org/InStock',
-              seller: {
-                '@type': 'Organization',
-                name: 'Bazarito Cancún',
-              },
-              shippingDetails: {
-                '@type': 'OfferShippingDetails',
-                shippingRate: {
-                  '@type': 'MonetaryAmount',
-                  value: 50,
-                  currency: 'MXN',
-                },
-                deliveryTime: {
-                  '@type': 'ShippingDeliveryTime',
-                  handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
-                  transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 1, unitCode: 'DAY' },
-                },
-              },
-            },
-          });
-          document.head.appendChild(script);
-        }
-      } catch (err) {
-        console.error('Error fetching product:', err);
-      }
-      setLoading(false);
-    }
-    load();
-    
-    // Cleanup on unmount
     return () => {
-      document.title = 'Bazarito Cancún ☀️ — Productos útiles a precios locales';
       const existingScript = document.getElementById('product-jsonld');
       if (existingScript) existingScript.remove();
     };
-  }, [id]);
+  }, [product]);
 
   async function handleShare() {
-    const url = `${window.location.origin}${import.meta.env.BASE_URL}p/${id}`;
+    const url = `${window.location.origin}/p/${product.id}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -196,7 +153,6 @@ export default function ProductLandingPage() {
       }
     }
 
-    // Robust Clipboard Copy with textarea fallback (crucial for Messenger / In-app Webviews)
     let copySuccess = false;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
@@ -231,38 +187,6 @@ export default function ProductLandingPage() {
     }
   }
 
-  // ── Loading state — use global skeleton shimmer ──────────────────────────
-  if (loading) {
-    return (
-      <div>
-        <Navbar />
-        <div className="plp-container">
-          <div className="plp-content">
-            <div className="plp-image-section skeleton" style={{ aspectRatio: '1/1' }} />
-            <div className="plp-info-section" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="skeleton" style={{ height: 36, borderRadius: 8, width: '80%' }} />
-              <div className="skeleton" style={{ height: 28, borderRadius: 8, width: '40%' }} />
-              <div className="skeleton" style={{ height: 80, borderRadius: 8 }} />
-              <div className="skeleton" style={{ height: 54, borderRadius: 12 }} />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!product) {
-    return (
-      <div>
-        <Navbar />
-        <div className="plp-error">
-          <h2>Producto no encontrado 😢</h2>
-          <button className="btn btn-primary" onClick={() => navigate('/')}>Ver catálogo</button>
-        </div>
-      </div>
-    );
-  }
-
   const images = filterValidImages(product.images?.length ? product.images : (product.image ? [product.image] : []));
   const ph = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', icon: Package };
   const isAvailable = product.status !== 'sold' && product.status !== 'out_of_stock';
@@ -270,9 +194,6 @@ export default function ProductLandingPage() {
 
   return (
     <div>
-      {/* Global Navbar — essential for navigation and brand recognition */}
-      <Navbar />
-
       <div className="plp-container">
         <div className="plp-content">
           <div className="plp-image-section">
