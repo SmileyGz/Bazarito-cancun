@@ -312,6 +312,7 @@ export default function ClientPage({ product }) {
           .plp-container {
             min-height: calc(100vh - 64px);
             background: var(--bg);
+            padding-top: 2.5rem;
             padding-bottom: env(safe-area-inset-bottom);
           }
           .plp-content {

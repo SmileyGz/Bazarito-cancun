@@ -1,5 +1,6 @@
 import '../src/index.css';
 import Navbar from '../src/components/Navbar';
+import Footer from '../src/components/Footer';
 import Script from 'next/script';
 
 export const metadata = {
@@ -131,7 +132,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body>
+      <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-T2GGQLP7"
@@ -151,7 +152,10 @@ export default function RootLayout({ children }) {
         </noscript>
 
         <Navbar />
-        {children}
+        <main style={{ flex: 1 }}>
+          {children}
+        </main>
+        <Footer />
       </body>
     </html>
   );
