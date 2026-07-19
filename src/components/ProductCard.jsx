@@ -87,8 +87,7 @@ export default function ProductCard({ product, onClick }) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${product.name} | Bazarito`,
-          text: `Mira este producto en Bazarito Cancún: ${product.name}`,
+          title: product.name,
           url: url
         });
         return;

@@ -155,7 +155,6 @@ export default function ClientPage({ product }) {
       try {
         await navigator.share({
           title: `${product?.name} | Bazarito Cancún`,
-          text: `Mira este producto en Bazarito Cancún: ${product?.name}`,
           url,
         });
         return;
