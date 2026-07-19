@@ -1,12 +1,20 @@
 import { supabase } from '../lib/supabase';
+import { Package, Home, Plug, PawPrint, Sparkles, Shirt } from 'lucide-react';
+
+// Helper to ignore Facebook imported images and only use own inventory uploads (base64)
+export function filterValidImages(images) {
+  if (!images) return [];
+  if (!Array.isArray(images)) images = [images];
+  return images.filter(img => img && typeof img === 'string' && img.startsWith('data:image'));
+}
 
 export const CATEGORIES = [
-  { id: 'all',      label: 'Todo',           emoji: '📦' },
-  { id: 'hogar',    label: 'Hogar y Decor',  emoji: '🏠' },
-  { id: 'gadgets',  label: 'Gadgets y Tech', emoji: '🔌' },
-  { id: 'mascotas', label: 'Mascotas',       emoji: '🐾' },
-  { id: 'bienestar',label: 'Bienestar',      emoji: '✨' },
-  { id: 'personal', label: 'Moda y Personal',emoji: '👗' },
+  { id: 'all',      label: 'Todo',           emoji: '📦', icon: Package },
+  { id: 'hogar',    label: 'Hogar y Decor',  emoji: '🏠', icon: Home },
+  { id: 'gadgets',  label: 'Gadgets y Tech', emoji: '🔌', icon: Plug },
+  { id: 'mascotas', label: 'Mascotas',       emoji: '🐾', icon: PawPrint },
+  { id: 'bienestar',label: 'Bienestar',      emoji: '✨', icon: Sparkles },
+  { id: 'personal', label: 'Moda y Personal',emoji: '👗', icon: Shirt },
 ];
 
 export const PRODUCT_TYPES = { STOCK: 'stock', ONE_OFF: 'one_off' };

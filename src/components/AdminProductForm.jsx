@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ImagePlus, Trash2 } from 'lucide-react';
-import { CATEGORIES, PRODUCT_TYPES, STATUSES } from '../data/store';
+import { CATEGORIES, PRODUCT_TYPES, STATUSES, filterValidImages } from '../data/store';
+import imageCompression from 'browser-image-compression';
 
 const MAX_IMAGES = 3;
 const MAX_SIZE_MB = 2; // compress target
@@ -13,7 +14,6 @@ const EMPTY = {
   variants: [], delivery_enabled: true,
 };
 
-import imageCompression from 'browser-image-compression';
 
 // Compress & resize image to base64 via browser-image-compression
 async function compressImage(file) {
@@ -48,9 +48,9 @@ export default function AdminProductForm({ product, onSave, onClose }) {
   useEffect(() => {
     if (product) {
       // Support legacy `image` string field → convert to images array
-      const imgs = product.images?.length
+      const imgs = filterValidImages(product.images?.length
         ? product.images
-        : (product.image ? [product.image] : []);
+        : (product.image ? [product.image] : []));
       setForm({ ...EMPTY, ...product, images: imgs });
       
       // If no images exist, they might just be excluded from getProducts payload, so we must fetch them manually
@@ -60,7 +60,7 @@ export default function AdminProductForm({ product, onSave, onClose }) {
           const { supabase } = await import('../lib/supabase');
           const { data } = await supabase.from('products').select('images').eq('id', product.id).single();
           if (mounted && data?.images?.length) {
-             setForm(prev => ({ ...prev, images: data.images }));
+             setForm(prev => ({ ...prev, images: filterValidImages(data.images) }));
           }
         }
         loadImages();

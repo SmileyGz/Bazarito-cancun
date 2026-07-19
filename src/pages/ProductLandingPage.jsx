@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Copy, Check, MessageCircle, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { ChevronLeft, ChevronRight, ShoppingBag, ArrowLeft, Share2, Check } from 'lucide-react';
+import { filterValidImages } from '../data/store';
 import CheckoutModal from '../components/CheckoutModal';
 import Navbar from '../components/Navbar';
 
-// Using the same placeholder logic as ProductCard
 const PLACEHOLDER_COLORS = {
-  hogar:      { bg: '#FFF3E0', emoji: '🏠' },
-  gadgets:    { bg: '#E8F5E9', emoji: '🔌' },
-  mascotas:   { bg: '#FCE4EC', emoji: '🐾' },
-  bienestar:  { bg: '#EDE7F6', emoji: '✨' },
-  ofertas:    { bg: '#FFF8E1', emoji: '🔥' },
-  muebles:    { bg: '#E3F2FD', emoji: '🛋️' },
-  electronica:{ bg: '#F3E5F5', emoji: '📱' },
-  personal:   { bg: '#FFF0F5', emoji: '👗' },
+  hogar:      { bg: '#FFF3E0', icon: Home },
+  gadgets:    { bg: '#E8F5E9', icon: Plug },
+  mascotas:   { bg: '#FCE4EC', icon: PawPrint },
+  bienestar:  { bg: '#EDE7F6', icon: Sparkles },
+  ofertas:    { bg: '#FFF8E1', icon: Flame },
+  muebles:    { bg: '#E3F2FD', icon: Armchair },
+  electronica:{ bg: '#F3E5F5', icon: Smartphone },
+  personal:   { bg: '#FFF0F5', icon: Shirt },
 };
 
 function ImageGallery({ images, placeholder }) {
@@ -39,8 +39,8 @@ function ImageGallery({ images, placeholder }) {
 
   if (images.length === 0 || broken) {
     return (
-      <div className="plp-gallery-empty" style={{ background: placeholder.bg }}>
-        <span>{placeholder.emoji}</span>
+      <div className="plp-gallery-empty" style={{ background: placeholder.bg, color: 'rgba(0,0,0,0.2)' }}>
+        {React.createElement(placeholder.icon, { size: 64, strokeWidth: 1.5 })}
       </div>
     );
   }
@@ -263,8 +263,8 @@ export default function ProductLandingPage() {
     );
   }
 
-  const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
-  const ph = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', emoji: '📦' };
+  const images = filterValidImages(product.images?.length ? product.images : (product.image ? [product.image] : []));
+  const ph = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', icon: Package };
   const isAvailable = product.status !== 'sold' && product.status !== 'out_of_stock';
   const deliveryEnabled = product.delivery_enabled !== false;
 

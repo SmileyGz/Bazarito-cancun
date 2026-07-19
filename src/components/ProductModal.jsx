@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { X, Tag, Repeat, Truck, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
-import { STATUSES, PRODUCT_TYPES, CATEGORIES } from '../data/store';
+import { X, Tag, Repeat, Truck, MapPin, Clock, ChevronLeft, ChevronRight, ShoppingBag, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package } from 'lucide-react';
+import { STATUSES, PRODUCT_TYPES, CATEGORIES, filterValidImages } from '../data/store';
 import CheckoutModal from './CheckoutModal';
 import { supabase } from '../lib/supabase';
 
 const PLACEHOLDER_COLORS = {
-  hogar:      { bg: '#FFF3E0', emoji: '🏠' },
-  gadgets:    { bg: '#E8F5E9', emoji: '🔌' },
-  mascotas:   { bg: '#FCE4EC', emoji: '🐾' },
-  bienestar:  { bg: '#EDE7F6', emoji: '✨' },
-  ofertas:    { bg: '#FFF8E1', emoji: '🔥' },
-  muebles:    { bg: '#E3F2FD', emoji: '🛋️' },
-  electronica:{ bg: '#F3E5F5', emoji: '📱' },
-  personal:   { bg: '#FFF0F5', emoji: '👗' },
+  hogar:      { bg: '#FFF3E0', icon: Home },
+  gadgets:    { bg: '#E8F5E9', icon: Plug },
+  mascotas:   { bg: '#FCE4EC', icon: PawPrint },
+  bienestar:  { bg: '#EDE7F6', icon: Sparkles },
+  ofertas:    { bg: '#FFF8E1', icon: Flame },
+  muebles:    { bg: '#E3F2FD', icon: Armchair },
+  electronica:{ bg: '#F3E5F5', icon: Smartphone },
+  personal:   { bg: '#FFF0F5', icon: Shirt },
 };
 
 // Image gallery with prev/next arrows
@@ -30,8 +30,8 @@ function ImageGallery({ images, placeholder }) {
 
   if (images.length === 0 || broken) {
     return (
-      <div className="pmg-empty" style={{ background: placeholder.bg }}>
-        <span style={{ fontSize:'5rem' }}>{placeholder.emoji}</span>
+      <div className="pmg-empty" style={{ background: placeholder.bg, color: 'rgba(0,0,0,0.2)' }}>
+        {React.createElement(placeholder.icon, { size: 64, strokeWidth: 1.5 })}
       </div>
     );
   }
@@ -103,21 +103,18 @@ export default function ProductModal({ product, onClose }) {
   const isOneOff = product.type   === PRODUCT_TYPES.ONE_OFF;
   const deliveryEnabled = product.delivery_enabled !== false;
   const catLabel = CATEGORIES.find(c => c.id === product.category)?.label || product.category;
-  const ph       = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', emoji: '📦' };
-
+  const ph = PLACEHOLDER_COLORS[product.category] || { bg: '#FFF8D6', icon: Package };
   // Support images[] array and legacy image string, or fetch if missing
   const [images, setImages] = useState(
-    product.images?.length ? product.images : (product.image ? [product.image] : [])
+    filterValidImages(product.images?.length ? product.images : (product.image ? [product.image] : []))
   );
-  
-  // Since CatalogPage no longer fetches full images to prevent DB timeout, fetch them when modal opens
   useEffect(() => {
     if (images.length > 0) return;
     let mounted = true;
     async function loadImages() {
       const { data } = await supabase.from('products').select('images').eq('id', product.id).single();
       if (mounted && data?.images?.length) {
-        setImages(data.images);
+        setImages(filterValidImages(data.images));
       }
     }
     loadImages();

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit2, Trash2, CheckCircle, ChevronUp, ChevronDown, Search, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { CATEGORIES, STATUSES, PRODUCT_TYPES } from '../data/store';
+import { CATEGORIES, STATUSES, PRODUCT_TYPES, filterValidImages } from '../data/store';
+import { Package } from 'lucide-react';
 
 const STATUS_MAP = {
   [STATUSES.AVAILABLE]:   { label: 'Disponible', cls: 'badge-green' },
@@ -10,7 +11,7 @@ const STATUS_MAP = {
 };
 
 function InventoryImage({ product, cat }) {
-  const [src, setSrc] = useState(product.images?.[0] || product.image || null);
+  const [src, setSrc] = useState(filterValidImages(product.images)?.[0] || filterValidImages([product.image])?.[0] || null);
   const [loading, setLoading] = useState(!src);
   const ref = useRef(null);
 
@@ -22,7 +23,7 @@ function InventoryImage({ product, cat }) {
         async function loadImg() {
           const { data } = await supabase.from('products').select('images').eq('id', product.id).single();
           if (mounted) {
-            setSrc(data?.images?.[0] || null);
+            setSrc(filterValidImages(data?.images)?.[0] || null);
             setLoading(false);
           }
         }
@@ -60,7 +61,12 @@ function InventoryImage({ product, cat }) {
     );
   }
   
-  return <span style={{ fontSize:'1.2rem' }}>{cat?.emoji || '📦'}</span>;
+  const Icon = cat?.icon || Package;
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(0,0,0,0.2)' }}>
+      <Icon size={24} strokeWidth={1.5} />
+    </div>
+  );
 }
 
 export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
@@ -178,7 +184,12 @@ export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
                       </div>
                     </div>
                   </td>
-                  <td className="itbl-td">{cat?.emoji} {cat?.label}</td>
+                  <td className="itbl-td">
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {cat && React.createElement(cat.icon, { size: 16, style: { color: 'var(--text-muted)' } })}
+                      {cat?.label}
+                    </span>
+                  </td>
                   <td className="itbl-td">
                     <span className={`badge ${p.type === PRODUCT_TYPES.STOCK ? 'badge-teal' : 'badge-orange'}`} style={{ fontSize:'0.7rem' }}>
                       {p.type === PRODUCT_TYPES.STOCK ? 'Stock' : 'Única'}

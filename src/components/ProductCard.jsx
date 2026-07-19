@@ -1,26 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Tag, Repeat, ChevronRight, Share2, Check } from 'lucide-react';
+import { Tag, Repeat, ChevronRight, Share2, Check, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { STATUSES, PRODUCT_TYPES, CATEGORIES } from '../data/store';
+import { STATUSES, PRODUCT_TYPES, CATEGORIES, filterValidImages } from '../data/store';
 
 // Gradient placeholder backgrounds per category
 const PLACEHOLDER_COLORS = {
-  hogar:      { bg: 'linear-gradient(135deg,#FFF3E0,#FFE0B2)', emoji: '🏠' },
-  gadgets:    { bg: 'linear-gradient(135deg,#E8F5E9,#C8E6C9)', emoji: '🔌' },
-  mascotas:   { bg: 'linear-gradient(135deg,#FCE4EC,#F8BBD9)', emoji: '🐾' },
-  bienestar:  { bg: 'linear-gradient(135deg,#EDE7F6,#D1C4E9)', emoji: '✨' },
-  ofertas:    { bg: 'linear-gradient(135deg,#FFF8E1,#FFECB3)', emoji: '🔥' },
-  muebles:    { bg: 'linear-gradient(135deg,#E3F2FD,#BBDEFB)', emoji: '🛋️' },
-  electronica:{ bg: 'linear-gradient(135deg,#F3E5F5,#E1BEE7)', emoji: '📱' },
-  personal:   { bg: 'linear-gradient(135deg,#FFF0F5,#FFD6E7)', emoji: '👗' },
+  hogar:      { bg: 'linear-gradient(135deg,#FFF3E0,#FFE0B2)', icon: Home },
+  gadgets:    { bg: 'linear-gradient(135deg,#E8F5E9,#C8E6C9)', icon: Plug },
+  mascotas:   { bg: 'linear-gradient(135deg,#FCE4EC,#F8BBD9)', icon: PawPrint },
+  bienestar:  { bg: 'linear-gradient(135deg,#EDE7F6,#D1C4E9)', icon: Sparkles },
+  ofertas:    { bg: 'linear-gradient(135deg,#FFF8E1,#FFECB3)', icon: Flame },
+  muebles:    { bg: 'linear-gradient(135deg,#E3F2FD,#BBDEFB)', icon: Armchair },
+  electronica:{ bg: 'linear-gradient(135deg,#F3E5F5,#E1BEE7)', icon: Smartphone },
+  personal:   { bg: 'linear-gradient(135deg,#FFF0F5,#FFD6E7)', icon: Shirt },
 };
 import { supabase } from '../lib/supabase';
 
 function ProductImage({ product }) {
-  const [src, setSrc] = useState(product.images?.[0] || product.image || null);
+  const [src, setSrc] = useState(filterValidImages(product.images)?.[0] || filterValidImages([product.image])?.[0] || null);
   const [loading, setLoading] = useState(!src);
   const ref = useRef(null);
-  const ph = PLACEHOLDER_COLORS[product.category] || { bg: 'linear-gradient(135deg,#FFF8D6,#FFE89A)', emoji: '📦' };
+  const ph = PLACEHOLDER_COLORS[product.category] || { bg: 'linear-gradient(135deg,#FFF8D6,#FFE89A)', icon: Package };
 
   useEffect(() => {
     if (src || !loading) return;
@@ -31,7 +31,7 @@ function ProductImage({ product }) {
         async function loadImg() {
           const { data } = await supabase.from('products').select('images').eq('id', product.id).single();
           if (mounted) {
-             setSrc(data?.images?.[0] || null);
+             setSrc(filterValidImages(data?.images)?.[0] || null);
              setLoading(false);
           }
         }
@@ -67,8 +67,8 @@ function ProductImage({ product }) {
     );
   }
   return (
-    <div className="pcard-placeholder" style={{ background: ph.bg }}>
-      <span style={{ fontSize: '3rem', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.10))' }}>{ph.emoji}</span>
+    <div className="pcard-placeholder" style={{ background: ph.bg, color: 'rgba(0,0,0,0.2)' }}>
+      {React.createElement(ph.icon, { size: 48, strokeWidth: 1.5 })}
     </div>
   );
 }
