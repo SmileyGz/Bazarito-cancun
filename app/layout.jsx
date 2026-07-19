@@ -21,7 +21,7 @@ export const metadata = {
     url: 'https://bazaritocancun.com/',
     title: 'Bazarito Cancún ☀️ — Tu bazar local',
     description: '¡Ofertas, gadgets y más en un solo lugar! Encuentra lo que necesitas con entrega rápida en Cancún.',
-    images: [{ url: 'https://bazaritocancun.com/social-cover.jpg' }],
+    images: [{ url: 'https://bazaritocancun.com/Logo.png' }],
     locale: 'es_MX',
     siteName: 'Bazarito Cancún',
   },
@@ -29,7 +29,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Bazarito Cancún ☀️ — Tu bazar local',
     description: '¡Ofertas, gadgets y más en un solo lugar! Encuentra lo que necesitas con entrega rápida en Cancún.',
-    images: ['https://bazaritocancun.com/social-cover.jpg'],
+    images: ['https://bazaritocancun.com/Logo.png'],
   },
 };
 
@@ -41,7 +41,7 @@ export default function RootLayout({ children }) {
     "description": "Bazar local en Cancún con entrega a domicilio. Gadgets, hogar, mascotas, bienestar y más a precios locales en Región 96 y alrededores.",
     "url": "https://bazaritocancun.com",
     "logo": "https://bazaritocancun.com/Logo.png",
-    "image": "https://bazaritocancun.com/social-cover.jpg",
+    "image": "https://bazaritocancun.com/Logo.png",
     "telephone": "+52-954-338-8332",
     "priceRange": "$$",
     "currenciesAccepted": "MXN",
