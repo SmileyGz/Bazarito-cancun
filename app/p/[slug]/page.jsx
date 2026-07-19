@@ -32,6 +32,9 @@ export async function generateMetadata({ params }) {
       description: data.description || 'Producto disponible con entrega en Cancún.',
       images: getValidImages().map(img => img.url),
     },
+    other: {
+      'fb:app_id': '933683316366381',
+    },
   };
 }
 
