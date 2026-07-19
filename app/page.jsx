@@ -4,14 +4,14 @@ import React, { useState, useEffect } from 'react';
 import HeroSection from '../src/components/HeroSection';
 import CategoryFilter from '../src/components/CategoryFilter';
 import ProductGrid from '../src/components/ProductGrid';
-import ProductModal from '../src/components/ProductModal';
 import { getPublicProducts } from '../src/data/store';
+import { useRouter } from 'next/navigation';
 
 export default function CatalogPage() {
   const [products, setProducts]     = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     async function load() {
@@ -59,7 +59,7 @@ export default function CatalogPage() {
               <span className="catalog-hint">Toca cualquier producto para ver detalles 👆</span>
             </div>
 
-            <ProductGrid products={filtered} onProductClick={setSelectedProduct} />
+            <ProductGrid products={filtered} onProductClick={(p) => router.push('/p/' + (p.slug || p.id))} />
           </>
         )}
       </main>
@@ -91,9 +91,6 @@ export default function CatalogPage() {
         </div>
       </footer>
 
-      {selectedProduct && (
-        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
-      )}
 
       <style>{`
         .catalog-meta {
