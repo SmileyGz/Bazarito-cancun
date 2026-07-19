@@ -18,12 +18,17 @@ const PLACEHOLDER_COLORS = {
 // Image gallery with prev/next arrows
 function ImageGallery({ images, placeholder }) {
   const [idx, setIdx] = useState(0);
+  const [broken, setBroken] = useState(false);
   const hasMultiple = images.length > 1;
+
+  useEffect(() => {
+    setBroken(false);
+  }, [idx, images]);
 
   const prev = (e) => { e.stopPropagation(); setIdx(i => (i - 1 + images.length) % images.length); };
   const next = (e) => { e.stopPropagation(); setIdx(i => (i + 1) % images.length); };
 
-  if (images.length === 0) {
+  if (images.length === 0 || broken) {
     return (
       <div className="pmg-empty" style={{ background: placeholder.bg }}>
         <span style={{ fontSize:'5rem' }}>{placeholder.emoji}</span>
@@ -33,7 +38,7 @@ function ImageGallery({ images, placeholder }) {
 
   return (
     <div className="pmg">
-      <img key={idx} src={images[idx]} alt={`Foto ${idx + 1}`} className="pmg-img" />
+      <img key={idx} src={images[idx]} alt={`Foto ${idx + 1}`} className="pmg-img" onError={() => setBroken(true)} />
 
       {hasMultiple && (
         <>

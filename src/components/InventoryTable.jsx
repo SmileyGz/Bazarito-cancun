@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Edit2, Trash2, CheckCircle, ChevronUp, ChevronDown, Search, AlertTriangle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { CATEGORIES, STATUSES, PRODUCT_TYPES } from '../data/store';
 
 const STATUS_MAP = {
@@ -7,6 +8,60 @@ const STATUS_MAP = {
   [STATUSES.SOLD]:        { label: 'Vendido',     cls: 'badge-red'   },
   [STATUSES.OUT_OF_STOCK]:{ label: 'Sin stock',   cls: 'badge-gray'  },
 };
+
+function InventoryImage({ product, cat }) {
+  const [src, setSrc] = useState(product.images?.[0] || product.image || null);
+  const [loading, setLoading] = useState(!src);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (src || !loading) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        let mounted = true;
+        async function loadImg() {
+          const { data } = await supabase.from('products').select('images').eq('id', product.id).single();
+          if (mounted) {
+            setSrc(data?.images?.[0] || null);
+            setLoading(false);
+          }
+        }
+        loadImg();
+        observer.disconnect();
+      }
+    }, { rootMargin: '100px' });
+    
+    if (ref.current) observer.observe(ref.current);
+    return () => {
+      observer.disconnect();
+    };
+  }, [product.id, src, loading]);
+
+  if (loading) {
+    return (
+      <div ref={ref} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 16, height: 16, border: '2px solid rgba(0,0,0,0.1)', borderTopColor: 'var(--teal)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      </div>
+    );
+  }
+  
+  if (src) {
+    return (
+      <img 
+        src={src} 
+        alt="" 
+        loading="lazy" 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        onError={e => {
+          e.target.onerror = null;
+          setSrc(null);
+        }} 
+      />
+    );
+  }
+  
+  return <span style={{ fontSize:'1.2rem' }}>{cat?.emoji || '📦'}</span>;
+}
 
 export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
   const [search, setSearch]     = useState('');
@@ -111,10 +166,7 @@ export default function InventoryTable({ products, onEdit, onDelete, onSale }) {
                   <td className="itbl-td itbl-name-cell">
                     <div className="itbl-product">
                       <div className="itbl-thumb" style={{ background: isSold ? '#f0e8cc' : 'var(--bg-muted)' }}>
-                        {(p.images?.[0] || p.image)
-                          ? <img src={p.images?.[0] || p.image} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'cover' }} onError={e => e.target.style.display='none'} />
-                          : <span style={{ fontSize:'1.2rem' }}>{cat?.emoji || '📦'}</span>
-                        }
+                        <InventoryImage product={p} cat={cat} />
                       </div>
                       <div style={{ minWidth:0 }}>
                         <div className="itbl-pname">{p.name}</div>

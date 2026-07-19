@@ -147,7 +147,7 @@ export default function AdminProductForm({ product, onSave, onClose }) {
               {/* Existing images */}
               {(form.images || []).map((src, idx) => (
                 <div key={idx} className="apf-img-thumb">
-                  <img src={src} alt={`Foto ${idx+1}`} />
+                  <img src={src} alt={`Foto ${idx+1}`} onError={e => e.target.style.display='none'} />
                   {idx === 0 && <span className="apf-img-main-badge">Principal</span>}
                   <button type="button" className="apf-img-remove" onClick={() => removeImage(idx)}>
                     <Trash2 size={13} />

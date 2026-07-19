@@ -59,6 +59,10 @@ function ProductImage({ product }) {
         alt={product.name}
         className="pcard-photo"
         loading="lazy"
+        onError={e => {
+          e.target.onerror = null;
+          setSrc(null);
+        }}
       />
     );
   }

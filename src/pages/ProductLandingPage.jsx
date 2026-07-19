@@ -19,7 +19,12 @@ const PLACEHOLDER_COLORS = {
 
 function ImageGallery({ images, placeholder }) {
   const [idx, setIdx] = useState(0);
+  const [broken, setBroken] = useState(false);
   const hasMultiple = images.length > 1;
+
+  useEffect(() => {
+    setBroken(false);
+  }, [idx, images]);
 
   const prev = (e) => {
     e.stopPropagation();
@@ -32,7 +37,7 @@ function ImageGallery({ images, placeholder }) {
     setIdx(i => (i + 1) % images.length);
   };
 
-  if (images.length === 0) {
+  if (images.length === 0 || broken) {
     return (
       <div className="plp-gallery-empty" style={{ background: placeholder.bg }}>
         <span>{placeholder.emoji}</span>
@@ -42,7 +47,7 @@ function ImageGallery({ images, placeholder }) {
 
   return (
     <div className="plp-gallery">
-      <img key={idx} src={images[idx]} alt={`Foto ${idx + 1}`} className="plp-gallery-img" />
+      <img key={idx} src={images[idx]} alt={`Foto ${idx + 1}`} className="plp-gallery-img" onError={() => setBroken(true)} />
       {hasMultiple && (
         <>
           <button type="button" className="plp-arrow plp-left" onClick={prev} aria-label="Foto anterior"><ChevronLeft size={24} /></button>
