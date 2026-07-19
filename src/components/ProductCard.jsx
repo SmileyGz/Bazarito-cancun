@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Tag, Repeat, ChevronRight, Share2, Check, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { STATUSES, PRODUCT_TYPES, CATEGORIES, filterValidImages } from '../data/store';
 
 // Gradient placeholder backgrounds per category
@@ -54,15 +55,15 @@ function ProductImage({ product }) {
 
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt={product.name}
         className="pcard-photo"
-        loading="lazy"
-        onError={e => {
-          e.target.onerror = null;
-          setSrc(null);
-        }}
+        fill
+        sizes="(max-width: 768px) 50vw, 300px"
+        quality={85}
+        style={{ objectFit: 'cover' }}
+        onError={() => setSrc(null)}
       />
     );
   }

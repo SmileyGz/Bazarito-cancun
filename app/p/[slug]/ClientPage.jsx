@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Check, Home, Plug, PawPrint, Sparkles, Flame, Armchair, Smartphone, Shirt, Package, Share2, ShoppingBag, MapPin, Truck, Clock } from 'lucide-react';
 import { filterValidImages } from '../../../src/data/store';
 import CheckoutModal from '../../../src/components/CheckoutModal';
@@ -47,7 +48,18 @@ function ImageGallery({ images, placeholder }) {
 
   return (
     <div className="plp-gallery">
-      <img key={idx} src={images[idx]} alt={`Foto ${idx + 1}`} className="plp-gallery-img" onError={() => setBroken(true)} />
+      <Image 
+        key={idx} 
+        src={images[idx]} 
+        alt={`Foto ${idx + 1}`} 
+        className="plp-gallery-img" 
+        fill
+        sizes="(max-width: 768px) 100vw, 500px"
+        quality={90}
+        priority={idx === 0}
+        style={{ objectFit: 'cover' }}
+        onError={() => setBroken(true)} 
+      />
       {hasMultiple && (
         <>
           <button type="button" className="plp-arrow plp-left" onClick={prev} aria-label="Foto anterior"><ChevronLeft size={24} /></button>

@@ -23,12 +23,12 @@
   },
   "dynamicRoutes": [
     {
-      "page": "/p/[id]",
+      "page": "/p/[slug]",
       "regex": "^/p/([^/]+?)(?:/)?$",
       "routeKeys": {
-        "nxtPid": "nxtPid"
+        "nxtPslug": "nxtPslug"
       },
-      "namedRegex": "^/p/(?<nxtPid>[^/]+?)(?:/)?$"
+      "namedRegex": "^/p/(?<nxtPslug>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
