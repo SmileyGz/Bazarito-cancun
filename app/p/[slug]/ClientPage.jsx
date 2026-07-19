@@ -103,7 +103,7 @@ export default function ClientPage({ product }) {
       },
       offers: {
         '@type': 'Offer',
-        url: `https://bazaritocancun.com/p/${product.id}`,
+        url: `https://bazaritocancun.com/p/${product.slug || product.id}`,
         priceCurrency: 'MXN',
         price: product.price,
         priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
@@ -138,7 +138,7 @@ export default function ClientPage({ product }) {
   }, [product]);
 
   async function handleShare() {
-    const url = `${window.location.origin}/p/${product.id}`;
+    const url = `${window.location.origin}/p/${product.slug || product.id}`;
     if (navigator.share) {
       try {
         await navigator.share({

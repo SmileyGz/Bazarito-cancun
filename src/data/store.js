@@ -67,7 +67,7 @@ export async function getProducts() {
   const { data, error } = await supabase
     .from('products')
     .select(`
-      id, sku, name, description, status, price, cost, created_at, updated_at, custom_attributes,
+      id, sku, slug, name, description, status, price, cost, created_at, updated_at, custom_attributes,
       inventory (quantity),
       categories (slug),
       suppliers (name)
@@ -85,6 +85,7 @@ export async function getProducts() {
     return {
       id: p.id,
       sku: p.sku || '',
+      slug: p.slug || p.id,
       name: p.name,
       description: p.description,
       category: p.categories?.slug || 'hogar',
@@ -111,7 +112,7 @@ export async function getPublicProducts() {
   const { data, error } = await supabase
     .from('products')
     .select(`
-      id, name, description, sku, type, price, custom_attributes, created_at,
+      id, slug, name, description, sku, type, price, custom_attributes, created_at,
       inventory (quantity),
       categories (slug)
     `)
@@ -129,6 +130,7 @@ export async function getPublicProducts() {
     return {
       id: p.id,
       sku: p.sku || '',
+      slug: p.slug || p.id,
       name: p.name,
       description: p.description,
       category: p.categories?.slug || 'hogar',
@@ -150,6 +152,10 @@ export async function addProduct(product) {
   const categoryId = await getCategoryId(product.category);
   const supplierId = await getSupplierId(product.supplier || 'General');
 
+  const baseSlug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const shortHash = Math.random().toString(36).substring(2, 8);
+  const finalSlug = `${baseSlug}-${shortHash}`;
+
   const { data: prod, error } = await supabase
     .from('products')
     .insert([{
@@ -157,6 +163,7 @@ export async function addProduct(product) {
       category_id: categoryId,
       supplier_id: supplierId,
       name: product.name,
+      slug: finalSlug,
       description: product.description || '',
       type: 'physical',
       custom_attributes: {

@@ -357,7 +357,7 @@ export default function AdminProductForm({ product, onSave, onClose }) {
                 style={{ marginRight: 'auto', gap: '6px', color: 'var(--teal)', borderColor: 'var(--teal)' }}
                 onClick={(e) => {
                   e.preventDefault();
-                  navigator.clipboard.writeText(`${window.location.origin}/p/${product.id}`);
+                  navigator.clipboard.writeText(`${window.location.origin}/p/${product.slug || product.id}`);
                   const btn = e.currentTarget;
                   const original = btn.innerHTML;
                   btn.innerHTML = '¡Copiado!';

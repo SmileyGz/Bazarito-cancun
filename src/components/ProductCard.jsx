@@ -81,7 +81,7 @@ export default function ProductCard({ product, onClick }) {
   async function handleShare(e) {
     e.stopPropagation();
     e.preventDefault();
-    const url = `${window.location.origin}/p/${product.id}`;
+    const url = `${window.location.origin}/p/${product.slug || product.id}`;
     
     if (navigator.share) {
       try {
@@ -204,7 +204,7 @@ export default function ProductCard({ product, onClick }) {
 
         {/* ── Price CTA — links semantic URL for SEO, opens modal for users ── */}
         <Link
-          href={`/p/${product.id}`}
+          href={`/p/${product.slug || product.id}`}
           className="pcard-cta"
           onClick={(e) => {
             e.preventDefault();

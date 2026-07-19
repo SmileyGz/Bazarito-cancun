@@ -3,8 +3,8 @@ import ClientPage from './ClientPage';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata({ params }) {
-  const { id } = await params;
-  const { data } = await supabase.from('products').select('*').eq('id', id).single();
+  const { slug } = await params;
+  const { data } = await supabase.from('products').select('*').eq('slug', slug).single();
   
   if (!data) {
     return { title: 'Producto no encontrado | Bazarito Cancún' };
@@ -36,8 +36,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProductPage({ params }) {
-  const { id } = await params;
-  const { data, error } = await supabase.from('products').select('*, inventory(quantity)').eq('id', id).single();
+  const { slug } = await params;
+  const { data, error } = await supabase.from('products').select('*, inventory(quantity)').eq('slug', slug).single();
   
   if (!data || error) {
     notFound();
